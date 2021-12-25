@@ -52,6 +52,11 @@ double getIncidenceAngle(Ptr<Node> AP, Ptr<Node> UE) {
     return atan(plane_dist / height_diff);
 }
 
+
+double estimateOneRfChannelGain(Ptr<Node> RF_AP, Ptr<Node> UE) {
+
+}
+
 void calculateAllRfChannelGain(NodeContainer &RF_AP_nodes, NodeContainer &UE_nodes, std::vector<std::vector<double>> &RF_channel_gain_matrix) {
     for (int i = 0; i < RF_AP_num; i++)
 	{
@@ -62,85 +67,77 @@ void calculateAllRfChannelGain(NodeContainer &RF_AP_nodes, NodeContainer &UE_nod
 	}
 }
 
-void calculateAllVlcChannelGain(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<std::vector<double>> &VLC_channel_gain_matrix) {
-    for (int i = 0; i < VLC_AP_num; i++)
-	{
-		for (int j = 0; j < UE_num; j++)
-		{
-			VLC_channel_gain_matrix[i][j] = estimateOneVlcChannelGain(VLC_AP_nodes.Get(i), UE_nodes.Get(j));
-		}
-	}
+// H_F(k) = exp( -(k * modulation_bandwidth) / (subcarrier_num*fitting_coefficient*3dB_cutoff))
+double estimateOneVlcFrontEnd(int subcarrier_index) {
+
+    return exp((-1) * frequency / (fitting_coefficient * 3dB_cutoff));
 }
 
-double estimateOneRfChannelGain(Ptr<Node> RF_AP, Ptr<Node> UE) {
-
-}
-
-double estimateOneVlcChannelGain(Ptr<Node> VLC_AP, Ptr<Node> UE) {
+double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE) {
     const double incidence_angle = getIncidenceAngle(VLC_AP, UE);
     if (radian2Degree(incidence_angle) >= field_of_view / 2)
         return 0.0;
 
     const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view/2)), 2);
-    const double lambertian_coefficient = (-1) * log(2) / (log(cos(degree2Radian(PHI_half))));
-    const double irradiance_angle = incidence_angle; // the angle of
+    const double lambertian_coefficient = (-1) / (log(cos(degree2Radian(PHI_half))));
+    const double irradiance_angle = incidence_angle;
     const double distance = getDistance(VLC_AP, UE);
 
-    double channel_gain = (lambertian_coefficient+1) * receiver_area / (2 * PI * pow(distance, 2));
-    channel_gain = channel_gain * concentrator_gain;
-    channel_gain = channel_gain * filter_gain;
-    channel_gain = channel_gain * pow(cos(irradiance_angle), lambertian_coefficient);
-    channel_gain = channel_gain * cos(incidence_angle);
+    double line_of_sight = (lambertian_coefficient+1) * receiver_area / (2 * PI * pow(distance, 2));
+    line_of_sight = line_of_sight * concentrator_gain;
+    line_of_sight = line_of_sight * filter_gain;
+    line_of_sight = line_of_sight * pow(cos(irradiance_angle), lambertian_coefficient);
+    line_of_sight = line_of_sight * cos(incidence_angle);
 
-    return channel_gain;
+    return line_of_sight;
 }
 
-void calculateAllRfSINR(std::vector<std::vector<double>> &RF_channel_gain_matrix, std::vector<std::vector<double>> &RF_SINR_matrix) {
-    for (int i = 0; i < RF_AP_num; i++)
-	{
-		for (int j = 0; j < UE_num; j++)
-		{
-			RF_SINR_matrix[i][j] = estimateOneRfSINR(RF_channel_gain_matrix, i, j);
-		}
-	}
-}
-
-void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_channel_gain_matrix, std::vector<std::vector<double>> &VLC_SINR_matrix) {
+double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<std::vector<double>> &VLC_LOS_matrix) {
     for (int i = 0; i < VLC_AP_num; i++)
 	{
 		for (int j = 0; j < UE_num; j++)
 		{
-			VLC_SINR_matrix[i][j] = estimateOneVlcSINR(VLC_channel_gain_matrix, i, j);
+			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), UE_nodes.Get(j));
 		}
 	}
 }
+
 
 double estimateOneRfSINR(std::vector<std::vector<double>> &RF_channel_gain_matrix, int RF_AP_index, int UE_index) {
 
 }
 
-double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_channel_gain_matrix, int VLC_AP_index, int UE_index) {
+void calculateAllRfDataRate(std::vector<std::vector<double>> &RF_SINR_matrix, std::vector<std::vector<double>> &RF_data_rate_matrix) {
+
+
+}
+
+double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
     double interference = 0;
     for (int i = 0; i < VLC_AP_num; i++) {
         if (i != VLC_AP_index)
-            interference += pow(conversion_efficiency * VLC_AP_power * VLC_channel_gain_matrix[i][UE_index], 2);
+            interference += pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[i][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2);
     }
 
-    double noise = VLC_AP_bandwidth * noise_power_spectral_density;
-    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_channel_gain_matrix[VLC_AP_index][UE_index], 2) / (interference+noise);
+    double noise = pow(optical_to_electric_power_ratio, 2) * VLC_AP_bandwidth * noise_power_spectral_density;
+    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_channel_gain_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference+noise);
 
     return SINR;
 }
 
-void calculateAllRfDataRate(std::vector<std::vector<double>> &RF_SINR_matrix, std::vector<std::vector<double>> &RF_data_rate_matrix);
-void calculateAllVlcDataRate(std::vector<std::vector<double>> &VLC_SINR_matrix, std::vector<std::vector<double>> &VLC_data_rate_matrix);
+double getSpectralEfficiency(double SINR) {
+    std::map<char,int>::iterator it = SINR_to_spectral_efficiency.lower_bound(SINR);
 
-void calculateBitErrorRatio(std::vector<std::vector<double>> &VLC_SINR_matrix, std::vector<double> &bit_error_ratios) {
-    for (int i = 0; i < VLC_AP_num; i++) {
-        double first_term = 2 * sqrt(modulation_order-1) / sqrt(modulation_order * log(modulation_order));
-        double second_term = erfc(sqrt(3*VLC_SINR_matrix[])) / (2 * modulation_order);
-
-        bit_error_ratios[i] =
-    }
+    return it->second;
 }
+
+void calculateOneVlcDataRate(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
+    double numerator = 2 * VLC_AP_bandwidth * getSpectralEfficiency(calculateOneVlcSINR(VLC_LOS_matrix, VLC_AP_index, UE_index, subcarrier_index));
+    double denominator = subcarrier_num * time_slot_num;
+
+    return numerator / denominator;
+}
+
+
+
 

@@ -1,10 +1,13 @@
 #ifndef GLOBAL_CONFIGURATION_H
 #define GLOBAL_CONFIGURATION_H
 
+#include <map>
+
+
+
 #define DEBUG_MODE 0
 #define PI 3.14159265359
 #define PROPOSED_METHOD 1
-
 
 const double room_size = 40;
 const int RF_AP_num = 4;
@@ -29,6 +32,7 @@ const int VLC_AP_power = 9;
 const int VLC_AP_bandwidth = 40; // MHz
 const double noise_power_spectral_density = 1e-15;
 const double conversion_efficiency = 0.53; // optical to electrical conversion efficiency
+const double optical_to_electric_power_ratio = 3;
 
 /*
     UE
@@ -47,6 +51,11 @@ const int filter_gain = 1;
 const double refractive_index = 1.5;
 const double receiver_area = 0.0001; // m^2
 const double reflection_efficiency = 0.75;
-const double subcarrier_num = 4; // 不確定是否等於 modulation order
+const int subcarrier_num = 4;
+const int time_slot_num = 16;
+const double fitting_coefficient = 2.88;
+const double 3dB_cutoff = 30 // MHz
+
+
 
 #endif // GLOBAL_CONFIGURATION_H
