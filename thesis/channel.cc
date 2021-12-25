@@ -117,10 +117,10 @@ double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int
 /*
     RF data rate
 
-    TODO:
-    - slot time is not given in the benchmark.
-    - RTS/CTS is much shorter than SIFS, PIFS, and DIFS in the benmark.
-    However, the situation is opposite in `Downlink and uplink resource allocation in IEEE 802.11 wireless LANs`.
+    NOTE:
+    - Slot time is not given in the benchmark.
+    - RTS/CTS is much shorter than SIFS, PIFS, and DIFS in the benchmark.
+    However, the situation is opposite in "Downlink and uplink resource allocation in IEEE 802.11 wireless LANs".
 */
 
 double calculateSystemUtilization(int num) {
