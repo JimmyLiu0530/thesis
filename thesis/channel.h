@@ -37,9 +37,6 @@ double getIncidenceAngle(Ptr<Node> AP, Ptr<Node> UE); // in radians
 /*
     channel gain
 */
-// RF
-double estimateOneRfChannelGain(Ptr<Node> RF_AP, Ptr<Node> UE);
-void calculateAllRfChannelGain(NodeContainer &RF_AP_nodes, NodeContainer &UE_nodes, std::vector<std::vector<double>> &RF_channel_gain_matrix);
 // VLC
 // LOS of all channels can be calculated in advance
 double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, double frequecny);
@@ -50,9 +47,6 @@ double estimateOneVlcFrontEnd(int subcarrier_index);
 /*
     SINR
 */
-// RF
-double estimateOneRfSINR(std::vector<std::vector<double>> &RF_channel_gain_matrix, int RF_AP_index, int UE_index);
-void calculateAllRfSINR(std::vector<std::vector<double>> &RF_channel_gain_matrix, std::vector<std::vector<double>> &RF_SINR_matrix);
 // VLC
 // Because SINR here is dependent on subcarrier frequency,
 // not able to calculate all SINR at a time (unless to consider all possible frequencies)
@@ -62,7 +56,12 @@ double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int
 /*
     data rate
 */
-void calculateRfDataRate(std::vector<std::vector<double>> &RF_SINR_matrix, std::vector<std::vector<double>> &RF_data_rate_matrix);
+// RF
+double calculateSystemUtilization(int num);
+double calculateDownlinkUtilizationEfficiency(int num);
+void calculateAllRfDownlinkUtilizationEfficiency(std::vector<double> &downlink_utilization_efficiency);
+
+// VLC
 double getSpectralEfficiency(double SINR);
 void calculateVlcDataRate(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index);
 

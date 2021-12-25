@@ -7,6 +7,9 @@
 #include "ns3/mobility-module.h"
 
 
+/*
+    distance and angle calculation
+*/
 
 double radian2Degree(const double &radian) {
     return radian * 180 / PI;
@@ -53,24 +56,14 @@ double getIncidenceAngle(Ptr<Node> AP, Ptr<Node> UE) {
 }
 
 
-double estimateOneRfChannelGain(Ptr<Node> RF_AP, Ptr<Node> UE) {
-
-}
-
-void calculateAllRfChannelGain(NodeContainer &RF_AP_nodes, NodeContainer &UE_nodes, std::vector<std::vector<double>> &RF_channel_gain_matrix) {
-    for (int i = 0; i < RF_AP_num; i++)
-	{
-		for (int j = 0; j < UE_num; j++)
-		{
-			RF_channel_gain_matrix[i][j] = estimateOneRfChannelGain(RF_AP_nodes.Get(i), UE_nodes.Get(j));
-		}
-	}
-}
+/*
+    VLC channel gain, including front-end and LOS
+*/
 
 // H_F(k) = exp( -(k * modulation_bandwidth) / (subcarrier_num*fitting_coefficient*3dB_cutoff))
 double estimateOneVlcFrontEnd(int subcarrier_index) {
 
-    return exp((-1) * frequency / (fitting_coefficient * 3dB_cutoff));
+    return exp((-1) * subcarrier_index * VLC_AP_bandwidth / (subcarrier_num * fitting_coefficient * 3dB_cutoff));
 }
 
 double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE) {
@@ -103,14 +96,9 @@ double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &U
 }
 
 
-double estimateOneRfSINR(std::vector<std::vector<double>> &RF_channel_gain_matrix, int RF_AP_index, int UE_index) {
-
-}
-
-void calculateAllRfDataRate(std::vector<std::vector<double>> &RF_SINR_matrix, std::vector<std::vector<double>> &RF_data_rate_matrix) {
-
-
-}
+/*
+    VLC SINR
+*/
 
 double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
     double interference = 0;
@@ -124,6 +112,52 @@ double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int
 
     return SINR;
 }
+
+
+/*
+    RF data rate
+
+    TODO:
+    - slot time is not given in the benchmark.
+    - RTS/CTS is much shorter than SIFS, PIFS, and DIFS in the benmark.
+    However, the situation is opposite in `Downlink and uplink resource allocation in IEEE 802.11 wireless LANs`.
+*/
+
+double calculateSystemUtilization(int num) {
+    double t_c = RTS_time + DIFS_time;
+    double t_s = RTS_time + CTS_time + header_time + propagation_delay + ACK_time + 3*SIFS_time + DIFS_time;
+    double t_d = header_time + propagation_delay + ACK_time + SIFS_time + PIFS_time;
+
+    double p_c = 2 / (max_backoff_stage+1);
+    double p_t = 1 - pow(1-p_c, num+1);
+    double p_s = ((num+1) * p_c * pow(1-p_c, num)) / (p_t);
+    double p_d = (num - 1) / (2 * num * p_s);
+
+    double denominator = (1 - p_t) * slot_time;
+    denominator += p_t * p_s * (1 - p_d) * t_s;
+    denominator += p_t * p_s * p_d * t_d;
+    denominator += p_t * (1 - p_s) * t_c;
+
+    return (p_s * p_t * propagation_delay) / (denominator);
+}
+
+double calculateDownlinkUtilizationEfficiency(int num) {
+    double system_utilization = calculateSystemUtilization(num);
+
+    return system_utilization * utilization_ratio / (1+utilization_ratio);
+}
+
+// can be calculated prior to the simulation
+void calculateAllRfDownlinkUtilizationEfficiency(std::vector<double> &downlink_utilization_efficiency) {
+    for (int i = 1; i <= UE_num; i++) {
+        downlink_utilization_efficiency.push_back(calculateDownlinkUtilizationEfficiency(i));
+    }
+}
+
+
+/*
+    VLC data rate
+*/
 
 double getSpectralEfficiency(double SINR) {
     std::map<char,int>::iterator it = SINR_to_spectral_efficiency.lower_bound(SINR);
