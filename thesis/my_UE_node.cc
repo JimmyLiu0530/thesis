@@ -12,6 +12,20 @@
 using namespace ns3;
 
 
+MyUeNode::MyUeNode(int node_ID, Vector pos, double required_data_rate, double orientation_angle)
+    : generator(std::chrono::system_clock::now().time_since_epoch().count()), distribution(0.0, sqrt(noise_variance))
+    {
+        this.node_ID = node_ID;
+        this.pos = pos;
+        this.required_data_rate = required_rate;
+        this.orientation_angle = orientation_angle;
+
+        avg_throughput = 0;
+        prev_associated_AP = -1;
+        cur_associated_AP = -1;
+        SINR = 0;
+    }
+
 int My_UE_Node::getID(void) {
     reutrn node_id;
 }

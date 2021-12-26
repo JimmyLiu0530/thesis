@@ -109,6 +109,7 @@ double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, std::vector<MyUe
 }
 
 
+
 /*
     VLC SINR
 */
