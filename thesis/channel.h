@@ -26,21 +26,22 @@ SINR_to_spectral_efficiency[18] = 5.1152;
 SINR_to_spectral_efficiency[20] = 5.5547;
 
 
+
 /*
     distance and angle calculation
 */
 double radian2Degree(const double &radian);
 double degree2Radian(const double &degree);
-double getDistance(Ptr<Node> AP, Ptr<Node> UE); // in meters
-double getIncidenceAngle(Ptr<Node> AP, Ptr<Node> UE); // in radians
+double getDistance(Ptr<Node> AP, MyUeNode &UE); // in meters
+double getIrradianceAngle(Ptr<Node> AP, MyUeNode &UE); // in radians
 
 /*
     channel gain
 */
 // VLC
 // LOS of all channels can be calculated in advance
-double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, double frequecny);
-double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<std::vector<double>> &VLC_LOS_matrix);
+double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, MyUeNode &UE, double frequecny);
+double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, std::vector<MyUeNode> &myUElist, std::vector<std::vector<double>> &VLC_LOS_matrix);
 
 double estimateOneVlcFrontEnd(int subcarrier_index);
 

@@ -1,6 +1,7 @@
 #ifndef GLOBAL_CONFIGURATION_H
 #define GLOBAL_CONFIGURATION_H
 
+#include <cmath>
 
 #define DEBUG_MODE 0
 #define PI 3.14159265359
@@ -12,7 +13,8 @@ const int VLC_AP_num = 16;
 const int VLC_AP_per_row = 4;
 const int UE_num = 200;
 const double time_period = 500; // ms
-
+const double avg_speed = 1.0;
+const double pause_time = 0.0;
 
 /*
     RF AP
@@ -53,10 +55,10 @@ const double refractive_index = 1.5;
 const double receiver_area = 0.0001; // m^2
 const double reflection_efficiency = 0.75;
 const double fitting_coefficient = 2.88;
-const double 3dB_cutoff = 30 // MHz
+const double three_dB_cutoff = 30 // MHz
 
 /*
-    VLC handover
+    handover
 */
 const double VHO_efficiency = 0.6;
 const double HHO_efficiency = 0.9;
@@ -64,7 +66,7 @@ const double HHO_efficiency = 0.9;
 /*
     RF channel
 */
-const channel_bit_rate = 1732; // Mbps
+const double channel_bit_rate = 1732; // Mbps
 const int max_backoff_stage = 1024;
 const double RTS_time = 0.16; // µs
 const double CTS_time = 0.14;
@@ -76,6 +78,16 @@ const double DIFS_time = 128.0;
 const double slot_time = 52.0; // It is not given in benchmark paper. I infer this value by PIFS = SIFS + slot time, which is defined in ieee 802.11.
 const double propagation_delay = 1.0;
 const double utilization_ratio = 2.0; // ε
+
+
+/*
+    random orientation angle
+*/
+const double angle_mean = 30.0 // degree
+const double angle_variance = 7.78 // degree
+const double c_1 = pow(0.05, 0.1);
+const double c_0 = (1 - c_1) * angle_mean;
+const double noise_variance = (1 - c_1*c_1) * angle_variance * angle_variance;
 
 
 #endif // GLOBAL_CONFIGURATION_H

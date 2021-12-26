@@ -19,40 +19,51 @@ double degree2Radian(const double &degree) {
     return degree * PI / 180;
 }
 
-double getDistance(Ptr<Node> AP, Ptr<Node> UE) {
+double getDistance(Ptr<Node> AP, MyUeNode &UE) {
     Ptr<MobilityModel> AP_mobility_model = AP->GetObject<MobilityModel>();
-    Ptr<MobilityModel> UE_mobility_model = UE->GetObject<MobilityModel>();
+    Vector AP_pos = AP_mobility_model->GetPosition();
+    Vector UE_pos = UE.pos;
 
-    return AP_mobility_model->GetDistanceFrom(UE_mobility_model);
+    double dx = AP_pos.x - UE_pos.x;
+    double dy = AP_pos.y - UE_pos.y;
+    double dz = AP_pos.z - UE_pos.z;
+
+    return sqrt(dx*dx + dy*dy + dz*dz);
 }
 
 /*
        plane_dist
     AP----------
-      \        |
-       \       |
-        \      |
-         \     | height_diff
-          \    |
-           \   |
-            \θ |
-             \ |
-              UE
+    |Φ\        |
+    |  \       |
+    |   \      |
+    |    \     | height_diff
+    |     \    |
+    |      \   |
+    |       \  |
+    |        \ |
+              UE (PD)
 
-    arctan(plane_dist / height_diff) = θ
+    arctan(plane_dist / height_diff) = Φ
 */
-double getIncidenceAngle(Ptr<Node> AP, Ptr<Node> UE) {
+double getIrradianceAngle(Ptr<Node> AP, MyUeNode &UE) {
     Ptr<MobilityModel> AP_mobility_model = AP->GetObject<MobilityModel>();
     Vector AP_pos = AP_mobility_model->GetPosition();
-    Ptr<MobilityModel> UE_mobility_model = UE->GetObject<MobilityModel>();
-    Vector UE_pos = UE_mobility_model->GetPosition();
+    Vector UE_pos = UE.pos;
 
     double dx = AP_pos.x - UE_pos.x;
     double dy = AP_pos.y - UE_pos.y;
+
     const plane_dist = sqrt(dx*dx + dy*dy);
     const double height_diff = AP_pos.z - UE_pos.z;
 
     return atan(plane_dist / height_diff);
+}
+
+
+double randomOrientation(MyUeNode &UE) {
+    UE.randomAnOrientationAngle();
+    return UE.getOrientationAngle();
 }
 
 
@@ -63,17 +74,19 @@ double getIncidenceAngle(Ptr<Node> AP, Ptr<Node> UE) {
 // H_F(k) = exp( -(k * modulation_bandwidth) / (subcarrier_num*fitting_coefficient*3dB_cutoff))
 double estimateOneVlcFrontEnd(int subcarrier_index) {
 
-    return exp((-1) * subcarrier_index * VLC_AP_bandwidth / (subcarrier_num * fitting_coefficient * 3dB_cutoff));
+    return exp((-1) * subcarrier_index * VLC_AP_bandwidth / (subcarrier_num * fitting_coefficient * three_dB_cutoff));
 }
 
-double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE) {
-    const double incidence_angle = getIncidenceAngle(VLC_AP, UE);
+double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, MyUeNode &UE) {
+    const double irradiance_angle = getIrradianceAngle(VLC_AP, UE); // the irradiance angle of the Tx (Φ)
+
+    const double incidence_angle = irradiance_angle + randomOrientation(UE);// the incidence angle of the receiving PD (ψ) = irradiance_angle (Φ) + θ
     if (radian2Degree(incidence_angle) >= field_of_view / 2)
         return 0.0;
 
+
     const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view/2)), 2);
     const double lambertian_coefficient = (-1) / (log(cos(degree2Radian(PHI_half))));
-    const double irradiance_angle = incidence_angle;
     const double distance = getDistance(VLC_AP, UE);
 
     double line_of_sight = (lambertian_coefficient+1) * receiver_area / (2 * PI * pow(distance, 2));
@@ -85,12 +98,12 @@ double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE) {
     return line_of_sight;
 }
 
-double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<std::vector<double>> &VLC_LOS_matrix) {
+double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, std::vector<MyUeNode> &myUElist, std::vector<std::vector<double>> &VLC_LOS_matrix) {
     for (int i = 0; i < VLC_AP_num; i++)
 	{
-		for (int j = 0; j < UE_num; j++)
+		for (int j = 0; j < myUElist.size(); j++)
 		{
-			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), UE_nodes.Get(j));
+			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), myUElist(j));
 		}
 	}
 }
