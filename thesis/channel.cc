@@ -139,7 +139,7 @@ double estimateOneVlcFrontEnd(int subcarrier_index) {
 /*
     VLC SINR
 */
-double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
+double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
     double interference = 0;
     for (int i = 0; i < VLC_AP_num; i++) {
         if (i != VLC_AP_index)
@@ -150,6 +150,16 @@ double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int
     double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_channel_gain_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference+noise);
 
     return SINR;
+}
+
+void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix) {
+    for (int i = 0; i < VLC_AP_Num; i++) {
+		for (int j = 0; j < UE_Num; j++) {
+			for (int k = 0; k < subcarrier_num; k++) {
+                VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, i, j, k);
+			}
+		}
+	}
 }
 
 
@@ -205,13 +215,24 @@ double getSpectralEfficiency(double SINR) {
     return it->second;
 }
 
-void calculateOneVlcDataRate(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
-    double numerator = 2 * VLC_AP_bandwidth * getSpectralEfficiency(calculateOneVlcSINR(VLC_LOS_matrix, VLC_AP_index, UE_index, subcarrier_index));
+double estimateOneVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
+    double numerator = 2 * VLC_AP_bandwidth * getSpectralEfficiency(VLC_SINR_matrix[VLC_AP_index][UE_index][subcarrier_index]);
     double denominator = subcarrier_num * time_slot_num;
 
     return numerator / denominator;
 }
 
+
+void calculateAllVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix) {
+    for (int i = 0; i < VLC_AP_Num; i++) {
+		for (int j = 0; j < UE_Num; j++) {
+			for (int k = 0; k < subcarrier_num; k++) {
+                VLC_data_rate_matrix[i][j][k] = estimateOneVlcDataRate(VLC_SINR_matrix, i, j, k);
+			}
+		}
+	}
+
+}
 
 
 

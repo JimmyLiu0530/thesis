@@ -52,10 +52,8 @@ double estimateOneVlcFrontEnd(int subcarrier_index);
     SINR
 */
 // VLC
-// Because SINR here is dependent on subcarrier frequency,
-// not able to calculate all SINR at a time (unless to consider all possible frequencies)
-double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index);
-
+double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index);
+void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix);
 
 /*
     data rate
@@ -67,8 +65,8 @@ void calculateAllRfDownlinkUtilizationEfficiency(std::vector<double> &downlink_u
 
 // VLC
 double getSpectralEfficiency(double SINR);
-void calculateVlcDataRate(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index);
-
+double estimateVlcDataRate(std::vector<std::vector<double>> &VLC_SINR_matrix, int VLC_AP_index, int UE_index, int subcarrier_index);
+void calculateAllVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix);
 
 
 #endif // CHANNEL_H
