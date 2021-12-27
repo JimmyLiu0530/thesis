@@ -33,16 +33,19 @@ SINR_to_spectral_efficiency[20] = 5.5547;
 double radian2Degree(const double &radian);
 double degree2Radian(const double &degree);
 double getDistance(Ptr<Node> AP, MyUeNode &UE); // in meters
-double getIrradianceAngle(Ptr<Node> AP, MyUeNode &UE); // in radians
+double getIrradianceAngle(Ptr<Node> AP, Ptr<Node> UE); // in radians
+double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP_node, Ptr<Node> UE_node, MyUeNode &UE);
+double getRandomOrientation(MyUeNode &UE);
+
 
 /*
     channel gain
 */
 // VLC
-// LOS of all channels can be calculated in advance
-double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, MyUeNode &UE, double frequecny);
-double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, std::vector<MyUeNode> &myUElist, std::vector<std::vector<double>> &VLC_LOS_matrix);
-
+// line of sight
+double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE);
+double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<MyUeNode> &myUElist, std::vector<std::vector<double>> &VLC_LOS_matrix);
+//front-end
 double estimateOneVlcFrontEnd(int subcarrier_index);
 
 /*
@@ -58,8 +61,8 @@ double calculateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int
     data rate
 */
 // RF
-double calculateSystemUtilization(int num);
-double calculateDownlinkUtilizationEfficiency(int num);
+double calculateRfSystemUtilization(int serving_num);
+double calculateRfDownlinkUtilizationEfficiency(int serving_num);
 void calculateAllRfDownlinkUtilizationEfficiency(std::vector<double> &downlink_utilization_efficiency);
 
 // VLC

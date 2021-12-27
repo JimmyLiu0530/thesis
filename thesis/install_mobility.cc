@@ -84,6 +84,7 @@ void installUeMobility(NodeContainer &UE_nodes) {
 
     std::stringstream ssPos;
     ssPos << "ns3::UniformRandomVariable[Min=" << -room_size / 2 << "|Max=" << room_size / 2 << "]";
+
     // set an attribute to be set during construction
     pos.Set("X", StringValue(ssPos.str()));
     pos.Set("Y", StringValue(ssPos.str()));
@@ -91,10 +92,13 @@ void installUeMobility(NodeContainer &UE_nodes) {
     Ptr<PositionAllocator> position_allocator = pos.Create())->GetObject<PositionAllocator>();
     UE_Mobility.SetPositionAllocator(position_allocator);
 
+
     // set mobility model
+
     // - the random variable for user speed
     std::stringstream ss_speed;
     ss_speed << "ns3::UniformRandomVariable[Min=" << 0 << "|Max=" << avg_speed * 2 << "]";
+
     // - the random variable for pause time
     std::stringstream ssPause;
     ssPause << "ns3::UniformRandomVariable[Min=0.0|Max=" << pause_time << "]";
