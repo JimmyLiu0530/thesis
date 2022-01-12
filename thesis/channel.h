@@ -4,6 +4,7 @@
 #include <map>
 
 #include "global_configuration.h"
+#include "my_UE_node.h"
 
 
 using namespace ns3;
@@ -25,6 +26,19 @@ SINR_to_spectral_efficiency[16] = 4.5234;
 SINR_to_spectral_efficiency[18] = 5.1152;
 SINR_to_spectral_efficiency[20] = 5.5547;
 
+
+/*
+ * a high-level function for calculating all channel-related information for VLC and RF,
+ * including channel gain, SINR, achievable data rate
+ */
+void precalculation(NodeContainer  &RF_AP_node ,
+                      NodeContainer  &VLC_AP_nodes ,
+                      NodeContainer  &UE_nodes,
+                      std::vector<std::vector<double>> &VLC_LOS_matrix,
+                      std::vector<std::vector<double>> &VLC_SINR_matrix,
+                      std::vector<double> &RF_data_rate_vector,
+                      std::vector<std::vector<double>> &VLC_data_rate_matrix,
+                      std::vector<myUeNode> &my_UE_list);
 
 
 /*
@@ -48,6 +62,7 @@ double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &U
 //front-end
 double estimateOneVlcFrontEnd(int subcarrier_index);
 
+
 /*
     SINR
 */
@@ -55,13 +70,14 @@ double estimateOneVlcFrontEnd(int subcarrier_index);
 double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index);
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix);
 
+
 /*
     data rate
 */
 // RF
 double calculateRfSystemUtilization(int serving_num);
 double calculateRfDownlinkUtilizationEfficiency(int serving_num);
-void calculateAllRfDownlinkUtilizationEfficiency(std::vector<double> &downlink_utilization_efficiency);
+void calculateRfDataRate(std::vector<double> &RF_data_rate_vector);
 
 // VLC
 double getSpectralEfficiency(double SINR);

@@ -7,16 +7,16 @@
 #include "global_environment.h"
 #include "My_UE_Node.h"
 
-void print_RF_Channel_Gain_Matrix(std::vector<std::vector<double>> &RF_Channel_Gain_Matrix)
+void printRfChannelGainMatrix(std::vector<std::vector<double>> &RF_channel_gain_matrix)
 {
-    std::cout << "RF Channel Gain Matrix as below : " << std::endl;
+    std::cout << "RF channel gain matrix as below : " << std::endl;
 
-    for (int i = 0; i < RF_AP_Num; i++)
+    for (int i = 0; i < RF_AP_num; i++)
     {
 
-        for (int j = 0; j < UE_Num; j++)
+        for (int j = 0; j < UE_num; j++)
         {
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << RF_Channel_Gain_Matrix[i][j] << " ";
+            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << RF_channel_gain_matrix[i][j] << " ";
         }
 
         std::cout << std::endl;
@@ -26,17 +26,17 @@ void print_RF_Channel_Gain_Matrix(std::vector<std::vector<double>> &RF_Channel_G
 }
 
 
-void print_VLC_Channel_Gain_Matrix(std::vector<std::vector<double>> &VLC_Channel_Gain_Matrix)
+void printVlcLosMatrix(std::vector<std::vector<double>> &VLC_LOS_matrix)
 {
-    std::cout << "VLC Channel Gain Matrix as below : " << std::endl;
+    std::cout << "VLC channel gain matrix as below : " << std::endl;
 
-    for (int i = 0; i < VLC_AP_Num; i++)
+    for (int i = 0; i < VLC_AP_num; i++)
     {
 
-        for (int j = 0; j < UE_Num; j++)
+        for (int j = 0; j < UE_num; j++)
         {
 
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_Channel_Gain_Matrix[i][j] << " ";
+            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_LOS_matrix[i][j] << " ";
         }
 
         std::cout << std::endl;
@@ -46,16 +46,16 @@ void print_VLC_Channel_Gain_Matrix(std::vector<std::vector<double>> &VLC_Channel
 }
 
 
-void print_RF_SINR_Matrix(std::vector<std::vector<double>> &RF_SINR_Matrix)
+void printRfSinrMatrix(std::vector<std::vector<double>> &RF_SINR_matrix)
 {
-    std::cout << "RF SINR Matrix as below : " << std::endl;
+    std::cout << "RF SINR matrix as below : " << std::endl;
 
-    for (int i = 0; i < RF_AP_Num; i++)
+    for (int i = 0; i < RF_AP_num; i++)
     {
 
-        for (int j = 0; j < UE_Num; j++)
+        for (int j = 0; j < UE_num; j++)
         {
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << RF_SINR_Matrix[i][j] << " ";
+            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << RF_SINR_matrix[i][j] << " ";
         }
 
         std::cout << std::endl;
@@ -65,17 +65,17 @@ void print_RF_SINR_Matrix(std::vector<std::vector<double>> &RF_SINR_Matrix)
 }
 
 
-void print_VLC_SINR_Matrix(std::vector<std::vector<double>> &VLC_SINR_Matrix)
+void printVlcSinrMatrix(std::vector<std::vector<double>> &VLC_SINR_matrix)
 {
-    std::cout << "VLC SINR Matrix as below : " << std::endl;
+    std::cout << "VLC SINR matrix as below : " << std::endl;
 
-    for (int i = 0; i < VLC_AP_Num; i++)
+    for (int i = 0; i < VLC_AP_num; i++)
     {
 
-        for (int j = 0; j < UE_Num; j++)
+        for (int j = 0; j < UE_num; j++)
         {
 
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_SINR_Matrix[i][j] << " ";
+            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_SINR_matrix[i][j] << " ";
         }
 
         std::cout << std::endl;
@@ -85,43 +85,38 @@ void print_VLC_SINR_Matrix(std::vector<std::vector<double>> &VLC_SINR_Matrix)
 }
 
 
-void print_RF_DataRate_Matrix(std::vector<std::vector<double>> &RF_DataRate_Matrix)
+void printRfDataRateVector(std::vector<double> &RF_data_rate_vector)
 {
 
-    std::cout << "RF DataRate Matrix as below : " << std::endl;
+    std::cout << "RF data rate vector for different number of serving UE as below : " << std::endl;
 
-    for (int i = 0; i < RF_AP_Num; i++)
+
+    for (int i = 0; i < UE_num+1; i++)
     {
 
-        for (int j = 0; j < UE_Num; j++)
-        {
-
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << RF_DataRate_Matrix[i][j] << " ";
-        }
-
-        std::cout << std::endl;
+        std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << RF_data_rate_vector[i] << " ";
     }
 
     std::cout << std::endl;
 }
 
 
-void print_VLC_DataRate_Matrix(std::vector<std::vector<double>> &VLC_DataRate_Matrix)
+void printVlcDataRateMatrix(std::vector<std::vector<double>> &VLC_data_rate_matrix)
 {
 
-    std::cout << "VLC DataRate Matrix as below : " << std::endl;
+    std::cout << "VLC data rate matrix as below : " << std::endl;
 
-    for (int i = 0; i < VLC_AP_Num; i++)
+    for (int i = 0; i < VLC_AP_num; i++)
     {
 
-        for (int j = 0; j < UE_Num; j++)
+        for (int j = 0; j < UE_num; j++)
         {
 
             //速度 < 1 的太小了 show出來沒意義
             //視爲 0
-            if (VLC_DataRate_Matrix[i][j] > 1)
+            if (VLC_data_rate_matrix[i][j] > 1)
 
-                std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_DataRate_Matrix[i][j] << " ";
+                std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_data_rate_matrix[i][j] << " ";
             else
 
                 std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << 0 << " ";
@@ -135,18 +130,18 @@ void print_VLC_DataRate_Matrix(std::vector<std::vector<double>> &VLC_DataRate_Ma
 
 
 
-void print_AP_Association_Matrix(std::vector<std::vector<int>> &AP_Association_Matrix)
+void printApAssociationMatrix(std::vector<std::vector<int>> &AP_association_matrix)
 {
 
-    std::cout << "AP_Association_Matrix as below : " << std::endl;
+    std::cout << "AP_association_matrix as below : " << std::endl;
 
-    for (int i = 0; i < RF_AP_Num + VLC_AP_Num; i++)
+    for (int i = 0; i < RF_AP_num + VLC_AP_num; i++)
     {
 
-        for (int j = 0; j < UE_Num; j++)
+        for (int j = 0; j < UE_num; j++)
         {
 
-            std::cout << AP_Association_Matrix[i][j] << " ";
+            std::cout << AP_association_matrix[i][j] << " ";
         }
 
         std::cout << std::endl;
@@ -156,28 +151,28 @@ void print_AP_Association_Matrix(std::vector<std::vector<int>> &AP_Association_M
 }
 
 
-void print_TDMA_Matrix(std::vector<std::vector<double>> &TDMA_Matrix)
+void printTdmaMatrix(std::vector<std::vector<double>> &TDMA_matrix)
 {
 
-    std::cout << "TDMA_Matrix as below : " << std::endl;
+    std::cout << "TDMA_matrix as below : " << std::endl;
 
-    for (int i = 0; i < RF_AP_Num + VLC_AP_Num; i++)
+    for (int i = 0; i < RF_AP_num + VLC_AP_num; i++)
     {
 
-        if (i < RF_AP_Num)
+        if (i < RF_AP_num)
             std::cout << std::left << "RF AP " << std::setw(4) << i;
         else
-            std::cout << std::left << "VLC AP " << std::setw(3) << i - RF_AP_Num;
+            std::cout << std::left << "VLC AP " << std::setw(3) << i - RF_AP_num;
 
         double sum = 0;
-        for (int j = 0; j < UE_Num + 1; j++)
+        for (int j = 0; j < UE_num + 1; j++)
         {
 
             if (j > 0)
-                sum += TDMA_Matrix[i][j];
+                sum += TDMA_matrix[i][j];
             if (j == 0)
                 std::cout << "Residual = ";
-            std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(3) << TDMA_Matrix[i][j] << " ";
+            std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(3) << TDMA_matrix[i][j] << " ";
         }
 
         std::cout << std::left << std::setw(6) << "total =" << sum << std::endl;
@@ -186,35 +181,38 @@ void print_TDMA_Matrix(std::vector<std::vector<double>> &TDMA_Matrix)
     std::cout << std::endl;
 }
 
-void print_RF_AP_position(NodeContainer &RF_AP_Nodes) {
-    int RF_AP_Index = 1;
-    for (NodeContainer::Iterator it = RF_AP_Nodes.Begin(); it != RF_AP_Nodes.End(); ++it)
+void printRfApPosition(NodeContainer &RF_AP_node) {
+    int RF_AP_index = 1;
+    for (NodeContainer::Iterator it = RF_AP_node.Begin(); it != RF_AP_node.End(); ++it)
     {
-        Ptr<MobilityModel> RF_MobilityModel = (*it)->GetObject<MobilityModel>();
-        Vector pos = RF_MobilityModel->GetPosition();
-        std::cout << "Position of RF_AP " << RF_AP_Index++ << " =(" << pos.x << "," << pos.y << "," << pos.z << ")" << std::endl;
+        Ptr<MobilityModel> RF_mobility_model = (*it)->GetObject<MobilityModel>();
+        Vector pos = RF_mobility_model->GetPosition();
+
+        std::cout << "Position of RF_AP " << RF_AP_index++ << " =(" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
     }
     std::cout << std::endl;
 }
 
-void print_VLC_AP_position(NodeContainer &VLC_AP_Nodes) {
-    int VLC_AP_Index = 1;
-    for (NodeContainer::Iterator it = VLC_AP_Nodes.Begin(); it != VLC_AP_Nodes.End(); ++it)
+void printVlcApPosition(NodeContainer &VLC_AP_nodes) {
+    int VLC_AP_index = 1;
+    for (NodeContainer::Iterator it = VLC_AP_nodes.Begin(); it != VLC_AP_nodes.End(); ++it)
     {
-        Ptr<MobilityModel> VLC_MobilityModel = (*it)->GetObject<MobilityModel>();
-        Vector pos = VLC_MobilityModel->GetPosition();
-        std::cout << "Position of VLC_AP " << VLC_AP_Index++ << " =(" << pos.x << "," << pos.y << "," << pos.z << ")" << std::endl;
+        Ptr<MobilityModel> VLC_mobility_model = (*it)->GetObject<MobilityModel>();
+        Vector pos = VLC_mobility_model->GetPosition();
+
+        std::cout << "Position of VLC_AP " << VLC_AP_index++ << " =(" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
     }
     std::cout << std::endl;
 }
 
-void print_UE_position(NodeContainer &UE_Nodes) {
-    int UE_Index = 1;
-    for (NodeContainer::Iterator it = UE_Nodes.Begin(); it != UE_Nodes.End(); ++it)
+void printUePosition(NodeContainer &UE_nodes) {
+    int UE_index = 1;
+    for (NodeContainer::Iterator it = UE_nodes.Begin(); it != UE_nodes.End(); ++it)
     {
-        Ptr<MobilityModel> UE_MobilityModel = (*it)->GetObject<MobilityModel>();
-        Vector pos = UE_MobilityModel->GetPosition();
-        std::cout << "Position of UE " << UE_Index++ << " =(" << pos.x << "," << pos.y << "," << pos.z << ")" << std::endl;
+        Ptr<MobilityModel> UE_mobility_model = (*it)->GetObject<MobilityModel>();
+        Vector pos = UE_mobility_model->GetPosition();
+
+        std::cout << "Position of UE " << UE_index++ << " =(" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
     }
     std::cout << std::endl;
 }

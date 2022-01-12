@@ -5,6 +5,52 @@
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
+#include "my_UE_node.h"
+
+
+static int counter = 0;
+
+
+
+void precalculation(NodeContainer  &RF_AP_node,
+                      NodeContainer  &VLC_AP_nodes,
+                      NodeContainer  &UE_nodes,
+                      std::vector<std::vector<double>> &VLC_LOS_matrix,
+                      std::vector<std::vector<double>> &VLC_SINR_matrix,
+                      std::vector<double> &RF_data_rate_vector,
+                      std::vector<std::vector<double>> &VLC_data_rate_matrix,
+                      std::vector<myUeNode> &my_UE_list)
+{
+    calculateAllVlcLightOfSight(VLC_AP_nodes, UE_nodes, my_UE_list, VLC_LOS_matrix);
+
+#if DEBUG_MODE
+    print_VLC_LOS_Matrix(VLC_Channel_Gain_Matrix);
+#endif
+
+    calculateAllVlcSINR(VLC_LOS_matrix, VLC_SINR_matrix);
+
+#if DEBUG_MODE
+    print_VLC_SINR_Matrix(VLC_SINR_Matrix);
+#endif
+
+    // data rate for RF
+    //
+    // since RF data rate only depends on the number of serving UE,
+    // here we pre-calculate data rates under all possible number of serving UE,
+    // thus we do this once and for all
+    if (!estimate_RF_data_rate_only_once) {
+        counter++;
+        calculateRfDataRate(RF_data_rate_vector);
+    }
+    // data rate for VLC
+    calculateAllVlcDataRate(VLC_SINR_matrix, VLC_data_rate_matrix);
+
+#if DEBUG_MODE
+    print_RF_DataRate_Matrix(RF_DataRate_Matrix);
+    print_VLC_DataRate_Matrix(VLC_DataRate_Matrix);
+  #endif
+}
+
 
 
 /*
@@ -124,7 +170,7 @@ double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &U
 	{
 		for (int j = 0; j < UE_num; j++)
 		{
-			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), UE_nodes.Get(j), myUElist(j));
+			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), UE_nodes.Get(j), myUElist[j]);
 		}
 	}
 }
@@ -191,16 +237,18 @@ double calculateRfSystemUtilization(int serving_num) {
 }
 
 double calculateRfDownlinkUtilizationEfficiency(int serving_num) {
-    double system_utilization = calculateSystemUtilization(serving_num);
+    double system_utilization = calculateRfSystemUtilization(serving_num);
 
     return system_utilization * utilization_ratio / (1+utilization_ratio);
 }
 
-// can be calculated prior to the simulation
-// pre-calculate RF downlink utilization efficiency for all possible number of serving UEs
-void calculateAllRfDownlinkUtilizationEfficiency(std::vector<double> &downlink_utilization_efficiency) {
+void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
+    // for the case when no serving UE
+    RF_data_rate_vector.push_back(0);
+
     for (int i = 1; i <= UE_num; i++) {
-        downlink_utilization_efficiency.push_back(calculateDownlinkUtilizationEfficiency(i));
+        double downlink_utilization_eff = calculateRfDownlinkUtilizationEfficiency(i);
+        RF_data_rate_vector.push_back(channel_bit_rate * downlink_utilization_eff / UE_num);
     }
 }
 

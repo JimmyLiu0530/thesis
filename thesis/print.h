@@ -6,26 +6,26 @@
 #include "ns3/mobility-module.h"
 
 
-void print_RF_Channel_Gain_Matrix(std::vector<std::vector<double>> &RF_Channel_Gain_Matrix);
+void printRfChannelGainMatrix(std::vector<std::vector<double>> &RF_channel_gain_matrix);
 
-void print_VLC_Channel_Gain_Matrix(std::vector<std::vector<double>> &VLC_Channel_Gain_Matrix);
+void printVlcLosMatrix(std::vector<std::vector<double>> &VLC_LOS_matrix);
 
-void print_RF_SINR_Matrix(std::vector<std::vector<double>> &RF_SINR_Matrix);
+void printRfSinrMatrix(std::vector<std::vector<double>> &RF_SINR_matrix);
 
-void print_VLC_SINR_Matrix(std::vector<std::vector<double>> &VLC_SINR_Matrix);
+void printVlcSinrMatrix(std::vector<std::vector<double>> &VLC_SINR_matrix);
 
-void print_RF_DataRate_Matrix(std::vector<std::vector<double>> &RF_DataRate_Matrix);
+void printRfDataRateVector(std::vector<double> &RF_data_rate_vector);
 
-void print_VLC_DataRate_Matrix(std::vector<std::vector<double>> &VLC_DataRate_Matrix);
+void printVlcDataRateMatrix(std::vector<std::vector<double>> &VLC_data_rate_matrix);
 
-void print_AP_Association_Matrix(std::vector<std::vector<int>> &AP_Association_Matrix);
+void printApAssociationMatrix(std::vector<std::vector<int>> &AP_association_matrix);
 
-void print_TDMA_Matrix(std::vector<std::vector<double>> &TDMA_Matrix);
+void printTdmaMatrix(std::vector<std::vector<double>> &TDMA_matrix);
 
-void print_RF_AP_position(NodeContainer &RF_AP_Nodes);
+void printRfApPosition(NodeContainer &RF_AP_node);
 
-void print_VLC_AP_position(NodeContainer &VLC_AP_Nodes);
+void printVlcApPosition(NodeContainer &VLC_AP_nodes);
 
-void print_UE_position(NodeContainer &UE_Nodes);
+void printUePosition(NodeContainer &UE_nodes);
 
 #endif

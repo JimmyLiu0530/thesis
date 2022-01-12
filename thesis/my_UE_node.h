@@ -7,7 +7,6 @@
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
-#include "global_environment.h"
 
 
 using namespace ns3;
@@ -38,11 +37,12 @@ public:
     void setSINR(double in_SINR);
     double getSINR(void);
 
-    void addCurrIterationThroughput(double data_rate_in_Mbps);
+    void addThroughput(double data_rate_in_Mbps);
     std::vector<double> getThroughputHistory(void);
 
-    void addCurrSatisfactionLevel(double satis_level);
-    std::vector<double> getSatisfactionLevelHistory(void);
+    void addSatisfaction(double satis_level);
+    std::vector<double> getSatisfactionHistory(void);
+    double calculateAvgSatisfaction(void);
 
     double getOrientationAngle(void);
     void randomAnOrientationAngle(void);
@@ -61,7 +61,7 @@ private:
     int curr_associated_AP;
     double SINR;
     std::vector<double> throughput_per_iteration;
-    std::vector<double> satisfication_level_per_iteration;
+    std::vector<double> satisfaction_per_iteration;
 };
 
 #endif // MY_UE_NODE_H
