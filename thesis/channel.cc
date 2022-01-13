@@ -201,7 +201,7 @@ double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int 
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix) {
     for (int i = 0; i < VLC_AP_Num; i++) {
 		for (int j = 0; j < UE_Num; j++) {
-			for (int k = 0; k < subcarrier_num; k++) {
+			for (int k = 0; k < effective_subcarrier_num; k++) {
                 VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, i, j, k);
 			}
 		}
@@ -210,7 +210,7 @@ void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::
 
 
 /*
-    RF data rate
+    RF data rate for each UE connected to WiFi
 
     NOTE:
     - Slot time is not given in the benchmark.
@@ -218,15 +218,15 @@ void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::
     However, the situation is opposite in "Downlink and uplink resource allocation in IEEE 802.11 wireless LANs".
 */
 
-double calculateRfSystemUtilization(int serving_num) {
+double calculateRfSystemUtilization(int serving_UE_num) {
     double t_c = RTS_time + DIFS_time;
     double t_s = RTS_time + CTS_time + header_time + propagation_delay + ACK_time + 3*SIFS_time + DIFS_time;
     double t_d = header_time + propagation_delay + ACK_time + SIFS_time + PIFS_time;
 
     double p_c = 2 / (max_backoff_stage+1);
-    double p_t = 1 - pow(1-p_c, serving_num+1);
-    double p_s = ((serving_num+1) * p_c * pow(1-p_c, serving_num)) / (p_t);
-    double p_d = (serving_num - 1) / (2 * serving_num * p_s);
+    double p_t = 1 - pow(1-p_c, serving_UE_num+1);
+    double p_s = ((serving_UE_num+1) * p_c * pow(1-p_c, serving_UE_num)) / (p_t);
+    double p_d = (serving_UE_num - 1) / (2 * serving_UE_num * p_s);
 
     double denominator = (1 - p_t) * slot_time;
     denominator += p_t * p_s * (1 - p_d) * t_s;
@@ -236,8 +236,8 @@ double calculateRfSystemUtilization(int serving_num) {
     return (p_s * p_t * propagation_delay) / (denominator);
 }
 
-double calculateRfDownlinkUtilizationEfficiency(int serving_num) {
-    double system_utilization = calculateRfSystemUtilization(serving_num);
+double calculateRfDownlinkUtilizationEfficiency(int serving_UE_num) {
+    double system_utilization = calculateRfSystemUtilization(serving_UE_num);
 
     return system_utilization * utilization_ratio / (1+utilization_ratio);
 }
@@ -246,9 +246,9 @@ void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
     // for the case when no serving UE
     RF_data_rate_vector.push_back(0);
 
-    for (int i = 1; i <= UE_num; i++) {
-        double downlink_utilization_eff = calculateRfDownlinkUtilizationEfficiency(i);
-        RF_data_rate_vector.push_back(channel_bit_rate * downlink_utilization_eff / UE_num);
+    for (int serving_UE_num = 1; serving_UE_num <= UE_num; serving_UE_num++) {
+        double downlink_utilization_eff = calculateRfDownlinkUtilizationEfficiency(serving_UE_num);
+        RF_data_rate_vector.push_back(channel_bit_rate * downlink_utilization_eff / serving_UE_num);
     }
 }
 
@@ -257,12 +257,14 @@ void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
     VLC data rate
 */
 
+// return the corresponding spectral efficiency of the given SINR according to the pre-established table
 double getSpectralEfficiency(double SINR) {
     std::map<char,int>::iterator it = SINR_to_spectral_efficiency.lower_bound(SINR);
 
     return it->second;
 }
 
+// data rate of the RU on the certain subcarrier based on (6)
 double estimateOneVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
     double numerator = 2 * VLC_AP_bandwidth * getSpectralEfficiency(VLC_SINR_matrix[VLC_AP_index][UE_index][subcarrier_index]);
     double denominator = subcarrier_num * time_slot_num;
@@ -274,7 +276,7 @@ double estimateOneVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC
 void calculateAllVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix) {
     for (int i = 0; i < VLC_AP_Num; i++) {
 		for (int j = 0; j < UE_Num; j++) {
-			for (int k = 0; k < subcarrier_num; k++) {
+			for (int k = 0; k < effective_subcarrier_num; k++) {
                 VLC_data_rate_matrix[i][j][k] = estimateOneVlcDataRate(VLC_SINR_matrix, i, j, k);
 			}
 		}

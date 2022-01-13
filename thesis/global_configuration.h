@@ -33,7 +33,8 @@ const double conversion_efficiency = 0.53; // optical to electrical conversion e
 const double optical_to_electric_power_ratio = 3; // κ
 
 // these two values are found in "Resource Allocation in LiFi OFDMA Systems"
-const int subcarrier_num = 64; // M
+const int subcarrier_num = 64; // M = 64
+const int effective_subcarrier_num = subcarrier_num / 2 - 1; // M_e = M/2 - 1
 const int time_slot_num = 20; // K
 
 

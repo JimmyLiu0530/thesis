@@ -59,10 +59,10 @@ std::vector<std::vector<int>> AP_association_matrix(RF_AP_num+VLC_AP_num, std::v
 
 std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> (UE_num, 0));
 
-std::vector<std::vector<double>> VLC_SINR_matrix(VLC_AP_num, std::vector<double> (UE_num, 0));
+std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0)));
 
 std::vector<double> RF_data_rate_vector(UE_num+1, 0);
-std::vector<std::vector<double>> VLC_data_rate_matrix(VLC_AP_num, std::vector<double> (UE_num, 0));
+std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0)));
 
 std::vector<double> avg_throughput_per_UE(UE_Num, 0);
 std::vector<double> avg_satisfaction_per_UE(UE_Num, 0);
@@ -109,17 +109,15 @@ void updateToNextState(NodeContainer& RF_AP_node, NodeContainer& VLC_AP_nodes,
                                   NodeContainer& UE_nodes, std::vector<My_UE_Node>& my_UE_list) {
 #if(PROPOSED_METHOD)
 
-    Proposed_DynamicLB( state, RF_AP_node, VLC_AP_nodes, UE_nodes,
-                        VLC_LOS_matrix, VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
-                        AP_sssociation_matrix, my_UE_list);
+    proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
+                       VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
+                        AP_asssociation_matrix, my_UE_list);
 
 #else
 
-    /* Benchmark_DynamicLB( state, RF_AP_node, VLC_AP_nodes, UE_nodes,
-                            RF_Channel_Gain_Matrix, VLC_Channel_Gain_Matrix,
-                            RF_SINR_Matrix, VLC_SINR_Matrix,
-                            RF_DataRate_Matrix, VLC_DataRate_Matrix,
-                            Handover_Efficiency_Matrix, AP_Association_Matrix, my_UE_list);
+    /* benchmarkDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
+                           VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
+                            AP_asssociation_matrix, my_UE_list);
     */
 #endif
 
@@ -155,7 +153,7 @@ int main(int argc, char *argv[])
     }
 
 
-    /** Create RF AP node **/
+    // create RF AP node
     NodeContainer RF_AP_node;
     RF_AP_node.Create(RF_AP_Num);
     installRfApMobility(RF_AP_node);
@@ -164,7 +162,7 @@ int main(int argc, char *argv[])
     printRfApPosition(RF_AP_node);    //for debug use
 #endif
 
-    /** Create VLC AP nodes **/
+    // create VLC AP nodes
     NodeContainer VLC_AP_nodes;
     VLC_AP_nodes.Create (VLC_AP_num);
     installVlcApMobility(VLC_AP_nodes);
@@ -173,7 +171,7 @@ int main(int argc, char *argv[])
     printVlcApPosition(VLC_AP_nodes);  //for debug use
 #endif
 
-    /** Create UE nodes **/
+    // create UE nodes
     NodeContainer UE_nodes;
     UE_nodes.Create (UE_num);
     installUeMobility(UE_nodes);

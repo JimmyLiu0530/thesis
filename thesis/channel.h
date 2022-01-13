@@ -31,9 +31,9 @@ SINR_to_spectral_efficiency[20] = 5.5547;
  * a high-level function for calculating all channel-related information for VLC and RF,
  * including channel gain, SINR, achievable data rate
  */
-void precalculation(NodeContainer  &RF_AP_node ,
-                      NodeContainer  &VLC_AP_nodes ,
-                      NodeContainer  &UE_nodes,
+void precalculation(NodeContainer &RF_AP_node ,
+                      NodeContainer &VLC_AP_nodes ,
+                      NodeContainer &UE_nodes,
                       std::vector<std::vector<double>> &VLC_LOS_matrix,
                       std::vector<std::vector<double>> &VLC_SINR_matrix,
                       std::vector<double> &RF_data_rate_vector,
@@ -75,8 +75,8 @@ void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::
     data rate
 */
 // RF
-double calculateRfSystemUtilization(int serving_num);
-double calculateRfDownlinkUtilizationEfficiency(int serving_num);
+double calculateRfSystemUtilization(int serving_UE_num);
+double calculateRfDownlinkUtilizationEfficiency(int serving_UE_num);
 void calculateRfDataRate(std::vector<double> &RF_data_rate_vector);
 
 // VLC
