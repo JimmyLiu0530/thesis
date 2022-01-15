@@ -28,8 +28,9 @@ public:
 
     void setAvgThroughput(double data_rate_in_Mbps);
     double getAvgThroughput(void);
+    double getLastThroughput(void);
 
-    void setCurrAssociatedAP(int associated_AP_index);s
+    void setCurrAssociatedAP(int associated_AP_index);
     int getCurrAssociatedAP(void);
 
     int getPrevAssociatedAP(void);

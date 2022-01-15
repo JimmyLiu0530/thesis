@@ -56,6 +56,10 @@ double MyUeNode::getAvgThroughput(void) {
     return avg_throughput;
 }
 
+double MyUeNode::getLastThroughput(void) {
+    return throughput_per_iteration.back();
+}
+
 void MyUeNode::setCurrAssociatedAP(int associated_AP_index) {
     prev_associated_AP = cur_associated_AP;
     cur_associated_AP = associated_AP_index;
@@ -80,7 +84,7 @@ double MyUeNode::getSINR(void) {
 void MyUeNode::addThroughput(double data_rate_in_Mbps) {
     throughput_per_iteration.push_back(data_rate_in_Mbps);
 
-    // update avg. throughput
+    // update avgerage throughput
     double sum = 0;
     for (int i = 0; i < throughput_per_iteration.size(); i++)
         sum += throughput_per_iteration[i];

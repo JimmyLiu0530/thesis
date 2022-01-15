@@ -28,5 +28,6 @@ std::vector<MyUeNode> initializeMyUeNodeList(NodeContainer &UE_nodes)
 
         my_UE_list.push_back(MyUeNode(i, pos, required_data_rate, 0.0));
     }
+
     return my_UE_list;
 }

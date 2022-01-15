@@ -93,4 +93,9 @@ const double c_0 = (1 - c_1) * angle_mean;
 const double noise_variance = (1 - c_1 * c_1) * angle_variance * angle_variance;
 
 
+/*
+    utility function
+*/
+const double beta = 1.0; // fairness coefficient
+
 #endif // GLOBAL_CONFIGURATION_H
