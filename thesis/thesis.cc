@@ -28,11 +28,12 @@
 //   "tcp-large-transfer-$n-$i.pcap" where n and i represent node and interface
 // numbers respectively
 //  Usage (e.g.): ./waf --run tcp-large-transfer
-#include <ctype.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cassert>
+#include <algorithm>
+#include <iomanip>
 
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
@@ -40,14 +41,14 @@
 #include "ns3/internet-module.h"
 #include "ns3/point-to-point-module.h"
 #include "ns3/ipv4-global-routing-helper.h"
-#include "global_environment.h"
+#include "global_configuration.h"
 #include "install_mobility.h"
-#include "My_UE_Node.h"
-#include "My_UE_Node_List.h"
-#include "Channel.h"
+#include "my_UE_node.h"
+#include "my_UE_node_list.h"
+#include "channel.h"
 #include "print.h"
-#include "DynamicLB.h"
-#include "ProposedMethod.h"
+#include "benchmark.h"
+// #include "ProposedMethod.h"
 
 using namespace ns3;
 
@@ -64,8 +65,8 @@ std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::v
 std::vector<double> RF_data_rate_vector(UE_num+1, 0);
 std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0)));
 
-std::vector<double> avg_throughput_per_UE(UE_Num, 0);
-std::vector<double> avg_satisfaction_per_UE(UE_Num, 0);
+std::vector<double> avg_throughput_per_UE(UE_num, 0);
+std::vector<double> avg_satisfaction_per_UE(UE_num, 0);
 
 
 
@@ -75,7 +76,7 @@ static uint32_t currentTxBytes = 0;
 static const uint32_t writeSize = 1040;
 static int state = 0;
 uint8_t data[writeSize];
-char* path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output.csv";
+char path[] = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output.csv";
 
 
 void StartFlow(Ptr<Socket>, Ipv4Address, uint16_t);
@@ -101,12 +102,15 @@ static void RxEndAddress(Ptr<const Packet> p, const Address &address) {
     std::cout << "Rx throughput value is :" << throughput << std::endl;
     std::cout << "Current time is :" << theTime.back() << std::endl;
     std::cout << "Received size: " << p->GetSize() << " at: " << Simulator::Now().GetSeconds() << "s"
-              << "IP: " << InetSocketAddress::ConvertFrom(address).GetIpv4() << << std::endl;
+              << "IP: " << InetSocketAddress::ConvertFrom(address).GetIpv4() << std::endl;
 }
 
 
-void updateToNextState(NodeContainer& RF_AP_node, NodeContainer& VLC_AP_nodes,
-                                  NodeContainer& UE_nodes, std::vector<My_UE_Node>& my_UE_list) {
+void updateToNextState(NodeContainer &RF_AP_node,
+                       NodeContainer &VLC_AP_nodes,
+                       NodeContainer &UE_nodes,
+                       std::vector<MyUeNode> &my_UE_list)
+{
 #if(PROPOSED_METHOD)
 
     proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
@@ -115,17 +119,17 @@ void updateToNextState(NodeContainer& RF_AP_node, NodeContainer& VLC_AP_nodes,
 
 #else
 
-    /* benchmarkDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
-                           VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
-                            AP_asssociation_matrix, my_UE_list);
-    */
+    benchmarkDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
+                        VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
+                        AP_association_matrix, my_UE_list);
+
 #endif
 
-    sort(myUElist.begin(),myUElist.end(),[](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
+    std::sort(my_UE_list.begin(),my_UE_list.end(),[](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
 
 
     if(!Simulator::IsFinished())
-    Simulator::Schedule(MilliSeconds(Tp), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
+    Simulator::Schedule(MilliSeconds(time_period), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
 }
 
 
@@ -155,7 +159,7 @@ int main(int argc, char *argv[])
 
     // create RF AP node
     NodeContainer RF_AP_node;
-    RF_AP_node.Create(RF_AP_Num);
+    RF_AP_node.Create(RF_AP_num);
     installRfApMobility(RF_AP_node);
 
 #if DEBUG_MODE
@@ -331,42 +335,36 @@ int main(int argc, char *argv[])
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //begin implementation of sending "Application"
-void StartFlow(Ptr<Socket> localSocket, Ipv4Address servAddress,
-		uint16_t servPort) {
-	//NS_LOG_UNCOND("helooooooooooooooooo StartFlow");
-	localSocket->Connect(InetSocketAddress(servAddress, servPort)); //connect
+void StartFlow (Ptr<Socket> localSocket,
+                Ipv4Address servAddress,
+                uint16_t servPort)
+{
+  NS_LOG_LOGIC ("Starting flow at time " <<  Simulator::Now ().GetSeconds ());
+  localSocket->Connect (InetSocketAddress (servAddress, servPort)); //connect
 
-	// tell the tcp implementation to call WriteUntilBufferFull again
-	// if we blocked and new tx buffer space becomes available
-	localSocket->SetSendCallback(MakeCallback(&WriteUntilBufferFull));
-	WriteUntilBufferFull(localSocket, localSocket->GetTxAvailable());
+  // tell the tcp implementation to call WriteUntilBufferFull again
+  // if we blocked and new tx buffer space becomes available
+  //localSocket->SetSendCallback (MakeCallback (&WriteUntilBufferFull));
+  WriteUntilBufferFull (localSocket, localSocket->GetTxAvailable ());
+  currentTxBytes=0;
 }
 
-void WriteUntilBufferFull(Ptr<Socket> localSocket, uint32_t txSpace) {
-	//NS_LOG_UNCOND("helooooooooooooooooo WriteUntilBufferFull");
-	while (currentTxBytes < totalTxBytes && localSocket->GetTxAvailable() > 0) {
-
-		uint32_t left = totalTxBytes - currentTxBytes;
-		uint32_t dataOffset = currentTxBytes % writeSize;
-		uint32_t toWrite = writeSize - dataOffset;
-		toWrite = std::min (toWrite, left);
-		toWrite = std::min (toWrite, localSocket->GetTxAvailable ());
-
-		Ptr<Packet> p = Create<Packet>(&data[dataOffset], toWrite);
-		Ptr<Node> startingNode = localSocket->GetNode();
-		Ptr<VlcTxNetDevice> txOne = DynamicCast<VlcTxNetDevice>(startingNode->GetDevice(0) );
-		txOne->EnqueueDataPacket(p);
-
-		int amountSent = localSocket->Send (&data[dataOffset], toWrite, 0);
-		if(amountSent < 0)
-		{
-			// we will be called again when new tx space becomes available.
-			return;
-		}
-
-		currentTxBytes += amountSent;
-	}
-
-	localSocket->Close();
+void WriteUntilBufferFull (Ptr<Socket> localSocket, uint32_t txSpace)
+{
+  while (currentTxBytes < totalTxBytes && localSocket->GetTxAvailable () > 0)
+    {
+      uint32_t left = totalTxBytes - currentTxBytes;
+      uint32_t dataOffset = currentTxBytes % writeSize;
+      uint32_t toWrite = writeSize - dataOffset;
+      toWrite = std::min (toWrite, left);
+      toWrite = std::min (toWrite, localSocket->GetTxAvailable ());
+      int amountSent = localSocket->Send (&data[dataOffset], toWrite, 0);
+      if(amountSent < 0)
+        {
+          // we will be called again when new tx space becomes available.
+          return;
+        }
+      currentTxBytes += amountSent;
+    }
+  localSocket->Close ();
 }
-

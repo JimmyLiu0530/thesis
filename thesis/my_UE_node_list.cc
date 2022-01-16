@@ -6,8 +6,8 @@
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
-#include "My_UE_Node.h"
-#include "My_UE_Node_List.h"
+#include "my_UE_node.h"
+#include "my_UE_node_list.h"
 
 
 /*

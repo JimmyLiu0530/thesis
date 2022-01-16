@@ -8,18 +8,28 @@
 #include "my_UE_node.h"
 
 
-static int counter = 0;
 
+/*
+    table of conversion from SINR to spectral efficiency
+*/
+const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {1.0, 0.877}, {3.0, 1.1758}, {5.0, 1.4766},
+                                                                                     {8.0, 1.9141}, {9.0, 2.4063}, {11.0, 2.7305},
+                                                                                     {12.0, 3.3223}, {14.0, 3.9023}, {16.0, 4.5234},
+                                                                                     {18.0, 5.1152}, {20.0, 5.5547} };
+
+
+
+static int counter = 0;
 
 
 void precalculation(NodeContainer  &RF_AP_node,
                       NodeContainer  &VLC_AP_nodes,
                       NodeContainer  &UE_nodes,
                       std::vector<std::vector<double>> &VLC_LOS_matrix,
-                      std::vector<std::vector<double>> &VLC_SINR_matrix,
+                      std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                       std::vector<double> &RF_data_rate_vector,
-                      std::vector<std::vector<double>> &VLC_data_rate_matrix,
-                      std::vector<myUeNode> &my_UE_list)
+                      std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                      std::vector<MyUeNode> &my_UE_list)
 {
     calculateAllVlcLightOfSight(VLC_AP_nodes, UE_nodes, my_UE_list, VLC_LOS_matrix);
 
@@ -36,9 +46,9 @@ void precalculation(NodeContainer  &RF_AP_node,
     // data rate for RF
     //
     // since RF data rate only depends on the number of serving UE,
-    // here we pre-calculate data rates under all possible number of serving UE,
+    // here we pre-calculate all possible data rates under different number of serving UEs,
     // thus we do this once and for all
-    if (!estimate_RF_data_rate_only_once) {
+    if (!counter) {
         counter++;
         calculateRfDataRate(RF_data_rate_vector);
     }
@@ -68,7 +78,7 @@ double degree2Radian(const double &degree) {
 double getDistance(Ptr<Node> AP, MyUeNode &UE) {
     Ptr<MobilityModel> AP_mobility_model = AP->GetObject<MobilityModel>();
     Vector AP_pos = AP_mobility_model->GetPosition();
-    Vector UE_pos = UE.pos;
+    Vector UE_pos = UE.getPosition();
 
     double dx = AP_pos.x - UE_pos.x;
     double dy = AP_pos.y - UE_pos.y;
@@ -102,7 +112,7 @@ double getIrradianceAngle(Ptr<Node> AP, Ptr<Node> UE) {
     double dx = AP_pos.x - UE_pos.x;
     double dy = AP_pos.y - UE_pos.y;
 
-    const plane_dist = sqrt(dx*dx + dy*dy);
+    const double plane_dist = sqrt(dx*dx + dy*dy);
     const double height_diff = AP_pos.z - UE_pos.z;
 
     return atan(plane_dist / height_diff);
@@ -117,8 +127,10 @@ double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP_node, Ptr<Node> UE_node, MyUeN
 
     Ptr<MobilityModel> UE_mobility = UE_node->GetObject<MobilityModel>();
     Vector UE_curr_pos = UE_mobility->GetPosition();
-    Vector UE_next_pos = UE_mobility->GetNextPosition();
     UE.setPosition(UE_curr_pos);
+
+    Ptr<RandomWaypointMobilityModel> rand_UE_mobility = StaticCast<RandomWaypointMobilityModel, MobilityModel> (UE_mobility);
+    Vector UE_next_pos = rand_UE_mobility->GetNextPosition();
 
     double Omega = atan((UE_next_pos.y - UE_curr_pos.y) / (UE_next_pos.x - UE_curr_pos.x));
 
@@ -193,14 +205,14 @@ double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int 
     }
 
     double noise = pow(optical_to_electric_power_ratio, 2) * VLC_AP_bandwidth * noise_power_spectral_density;
-    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_channel_gain_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference+noise);
+    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference+noise);
 
     return SINR;
 }
 
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix) {
-    for (int i = 0; i < VLC_AP_Num; i++) {
-		for (int j = 0; j < UE_Num; j++) {
+    for (int i = 0; i < VLC_AP_num; i++) {
+		for (int j = 0; j < UE_num; j++) {
 			for (int k = 0; k < effective_subcarrier_num; k++) {
                 VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, i, j, k);
 			}
@@ -259,7 +271,7 @@ void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
 
 // return the corresponding spectral efficiency of the given SINR according to the pre-established table
 double getSpectralEfficiency(double SINR) {
-    std::map<char,int>::iterator it = SINR_to_spectral_efficiency.lower_bound(SINR);
+    auto it = SINR_to_spectral_efficiency.lower_bound(SINR);
 
     return it->second;
 }
@@ -274,8 +286,8 @@ double estimateOneVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC
 
 
 void calculateAllVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix) {
-    for (int i = 0; i < VLC_AP_Num; i++) {
-		for (int j = 0; j < UE_Num; j++) {
+    for (int i = 0; i < VLC_AP_num; i++) {
+		for (int j = 0; j < UE_num; j++) {
 			for (int k = 0; k < effective_subcarrier_num; k++) {
                 VLC_data_rate_matrix[i][j][k] = estimateOneVlcDataRate(VLC_SINR_matrix, i, j, k);
 			}

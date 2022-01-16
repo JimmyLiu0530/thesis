@@ -4,8 +4,8 @@
 #include <iomanip>
 
 #include "print.h"
-#include "global_environment.h"
-#include "My_UE_Node.h"
+#include "global_configuration.h"
+#include "my_UE_node.h"
 
 void printRfChannelGainMatrix(std::vector<std::vector<double>> &RF_channel_gain_matrix)
 {
@@ -65,17 +65,24 @@ void printRfSinrMatrix(std::vector<std::vector<double>> &RF_SINR_matrix)
 }
 
 
-void printVlcSinrMatrix(std::vector<std::vector<double>> &VLC_SINR_matrix)
+void printVlcSinrMatrix(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix)
 {
-    std::cout << "VLC SINR matrix as below : " << std::endl;
+    std::cout << "VLC SINR matrix as below: " << std::endl;
 
     for (int i = 0; i < VLC_AP_num; i++)
     {
-
+        std::cout << "For VLC AP " << i << ": \n";
         for (int j = 0; j < UE_num; j++)
         {
+            std::cout << "\tFor UE " << j << ": \n";
+            std::cout << "\t\t";
+            for (int k = 0; k < subcarrier_num; k++)
+            {
 
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_SINR_matrix[i][j] << " ";
+                std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_SINR_matrix[i][j][k] << " ";
+            }
+
+            std::cout << std::endl;
         }
 
         std::cout << std::endl;
@@ -101,25 +108,31 @@ void printRfDataRateVector(std::vector<double> &RF_data_rate_vector)
 }
 
 
-void printVlcDataRateMatrix(std::vector<std::vector<double>> &VLC_data_rate_matrix)
+void printVlcDataRateMatrix(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix)
 {
 
     std::cout << "VLC data rate matrix as below : " << std::endl;
 
     for (int i = 0; i < VLC_AP_num; i++)
     {
-
+        std::cout << "For VLC AP " << i << ": \n";
         for (int j = 0; j < UE_num; j++)
         {
+            std::cout << "\tFor UE " << j << ": \n";
+            std::cout << "\t\t";
+            for (int k = 0; k < subcarrier_num; k++)
+            {
+                //速度 < 1 的太小了 show出來沒意義
+                //視爲 0
+                if (VLC_data_rate_matrix[i][j][k] > 1.0)
+                    std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_data_rate_matrix[i][j][k] << " ";
 
-            //速度 < 1 的太小了 show出來沒意義
-            //視爲 0
-            if (VLC_data_rate_matrix[i][j] > 1)
+                else
+                    std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << 0 << " ";
 
-                std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_data_rate_matrix[i][j] << " ";
-            else
+            }
 
-                std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << 0 << " ";
+            std::cout << std::endl;
         }
 
         std::cout << std::endl;
@@ -181,8 +194,9 @@ void printTdmaMatrix(std::vector<std::vector<double>> &TDMA_matrix)
     std::cout << std::endl;
 }
 
-void printRfApPosition(NodeContainer &RF_AP_node) {
+void printRfApPosition(ns3::NodeContainer &RF_AP_node) {
     int RF_AP_index = 1;
+
     for (NodeContainer::Iterator it = RF_AP_node.Begin(); it != RF_AP_node.End(); ++it)
     {
         Ptr<MobilityModel> RF_mobility_model = (*it)->GetObject<MobilityModel>();
@@ -193,8 +207,9 @@ void printRfApPosition(NodeContainer &RF_AP_node) {
     std::cout << std::endl;
 }
 
-void printVlcApPosition(NodeContainer &VLC_AP_nodes) {
+void printVlcApPosition(ns3::NodeContainer &VLC_AP_nodes) {
     int VLC_AP_index = 1;
+
     for (NodeContainer::Iterator it = VLC_AP_nodes.Begin(); it != VLC_AP_nodes.End(); ++it)
     {
         Ptr<MobilityModel> VLC_mobility_model = (*it)->GetObject<MobilityModel>();
@@ -205,8 +220,9 @@ void printVlcApPosition(NodeContainer &VLC_AP_nodes) {
     std::cout << std::endl;
 }
 
-void printUePosition(NodeContainer &UE_nodes) {
+void printUePosition(ns3::NodeContainer &UE_nodes) {
     int UE_index = 1;
+
     for (NodeContainer::Iterator it = UE_nodes.Begin(); it != UE_nodes.End(); ++it)
     {
         Ptr<MobilityModel> UE_mobility_model = (*it)->GetObject<MobilityModel>();

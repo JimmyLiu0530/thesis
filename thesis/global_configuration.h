@@ -56,7 +56,7 @@ const double refractive_index = 1.5;
 const double receiver_area = 0.0001; // m^2
 const double reflection_efficiency = 0.75;
 const double fitting_coefficient = 2.88;
-const double three_dB_cutoff = 30 // MHz
+const double three_dB_cutoff = 30; // MHz
 
 /*
     handover
@@ -84,10 +84,10 @@ const double utilization_ratio = 2.0; // ε
 /*
     random orientation angle
 */
-const double coherence_time = 130.0 // ms
-const double sampling_time = 13.0 // ms
-const double angle_mean = 30.0 // degree
-const double angle_variance = 7.78 // degree
+const double coherence_time = 130.0; // ms
+const double sampling_time = 13.0; // ms
+const double angle_mean = 30.0; // degree
+const double angle_variance = 7.78; // degree
 const double c_1 = pow(0.05, sampling_time/coherence_time);
 const double c_0 = (1 - c_1) * angle_mean;
 const double noise_variance = (1 - c_1 * c_1) * angle_variance * angle_variance;

@@ -9,8 +9,8 @@
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 
-#include "global_environment.h"
-#include "My_UE_Node.h"
+#include "global_configuration.h"
+#include "my_UE_node.h"
 
 using namespace ns3;
 

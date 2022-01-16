@@ -10,21 +10,7 @@
 using namespace ns3;
 
 
-/*
-    table of conversion from SINR to spectral efficiency
-*/
-const std::map<double, double> SINR_to_spectral_efficiency;
-SINR_to_spectral_efficiency[1] = 0.877;
-SINR_to_spectral_efficiency[3] = 1.1758;
-SINR_to_spectral_efficiency[5] = 1.4766;
-SINR_to_spectral_efficiency[8] = 1.9141;
-SINR_to_spectral_efficiency[9] = 2.4063;
-SINR_to_spectral_efficiency[11] = 2.7305;
-SINR_to_spectral_efficiency[12] = 3.3223;
-SINR_to_spectral_efficiency[14] = 3.9023;
-SINR_to_spectral_efficiency[16] = 4.5234;
-SINR_to_spectral_efficiency[18] = 5.1152;
-SINR_to_spectral_efficiency[20] = 5.5547;
+
 
 
 /*
@@ -35,10 +21,10 @@ void precalculation(NodeContainer &RF_AP_node ,
                       NodeContainer &VLC_AP_nodes ,
                       NodeContainer &UE_nodes,
                       std::vector<std::vector<double>> &VLC_LOS_matrix,
-                      std::vector<std::vector<double>> &VLC_SINR_matrix,
+                      std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                       std::vector<double> &RF_data_rate_vector,
-                      std::vector<std::vector<double>> &VLC_data_rate_matrix,
-                      std::vector<myUeNode> &my_UE_list);
+                      std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                      std::vector<MyUeNode> &my_UE_list);
 
 
 /*
@@ -57,7 +43,7 @@ double getRandomOrientation(MyUeNode &UE);
 */
 // VLC
 // line of sight
-double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE);
+double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE_node, MyUeNode &UE);
 double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<MyUeNode> &myUElist, std::vector<std::vector<double>> &VLC_LOS_matrix);
 //front-end
 double estimateOneVlcFrontEnd(int subcarrier_index);

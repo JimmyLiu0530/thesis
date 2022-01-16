@@ -14,7 +14,6 @@
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 
-d
 
 void benchmarkDynamicLB(int state,
                        NodeContainer &RF_AP_node,
@@ -24,16 +23,22 @@ void benchmarkDynamicLB(int state,
                        std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                        std::vector<double> &RF_data_rate_vector,
                        std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                       std::vector<std::vector<double>> &AP_sssociation_matrix,
+                       std::vector<std::vector<int>> &AP_association_matrix,
                        std::vector<MyUeNode> &my_UE_list)
 {
     precalculation(RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix, VLC_SINR_matrix,
                    RF_data_rate_vector, VLC_data_rate_matrix, my_UE_list);
 
     if (state == 0)
-        algorithmForFirstState();
+        algorithmForFirstState(RF_data_rate_vector,
+                               VLC_data_rate_matrix,
+                               AP_association_matrix,
+                               my_UE_list);
     else
-        algorithmExceptFirstState();
+        algorithmExceptFirstState(RF_data_rate_vector,
+                                   VLC_data_rate_matrix,
+                                   AP_association_matrix,
+                                   my_UE_list);
 
 #if DEBUG_MODE
     for (int i = 0; i < my_UE_list.size(); i++) {
@@ -53,11 +58,11 @@ void benchmarkDynamicLB(int state,
 
 void algorithmForFirstState(std::vector<double> &RF_data_rate_vector,
                             std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                            std::vector<std::vector<double>> &AP_sssociation_matrix,
+                            std::vector<std::vector<int>> &AP_association_matrix,
                             std::vector<MyUeNode> &my_UE_list)
 {
     // step1: construct strategy sets of the form {RF_AP, best VLC_AP} for all UE
-    std::vector<std::vector<int>> strategy_set (UE_num, std::vector<int> (2, -1));
+    std::vector<std::vector<int>> strategy_set (UE_num, std::vector<int> (2, -1)); // {{RF_AP_idx, best VLC_AP_idx}, {RF_AP_idx, best VLC_AP_idx}, ...}
 
     for (int i = 0; i < UE_num; i++) {
         strategy_set[i][0] = 0; // strategy set always contains the RF AP
@@ -70,11 +75,12 @@ void algorithmForFirstState(std::vector<double> &RF_data_rate_vector,
 
             for (int k = 0; k < effective_subcarrier_num; k++)
                 total_link_data_rate += VLC_data_rate_matrix[j][i][k];
+
             total_link_data_rate *= time_slot_num;
 
             if (total_link_data_rate > max_data_rate) {
                 max_data_rate = total_link_data_rate;
-                best_VLC_AP = j+1;  // indexed starting from 1
+                best_VLC_AP = j+1;  // VLC APs are indexed starting from 1
             }
         }
         strategy_set[i][1] = best_VLC_AP;
@@ -83,20 +89,20 @@ void algorithmForFirstState(std::vector<double> &RF_data_rate_vector,
 
     // step2: UE are randomly allocated to an AP from their strategy set (APA)
     std::vector<int> serving_AP (UE_num, -1);
-    std::vector<std::vector<int>> served_UE (RF_AP_num + VLC_AP_num, std::vector<int>);
+    std::vector<std::vector<int>> served_UE (RF_AP_num + VLC_AP_num, std::vector<int> ()); // record the UEs served by a AP
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator (seed);
     std::uniform_int_distribution<int> distribution(0, 1);
 
     for (int i = 0; i < UE_num; i++) {
-        int chosen_AP = strategy_set[distribution(generator)];
+        int chosen_AP = strategy_set[i][distribution(generator)];
 
         serving_AP[i] = chosen_AP;
         served_UE[chosen_AP].push_back(i);
     }
 
-    updateApAssociationResult(my_UE_list, serving_AP, AP_sssociation_matrix);
+    updateApAssociationResult(my_UE_list, serving_AP, AP_association_matrix);
 
 
     //step3: resource allocation
@@ -110,11 +116,11 @@ void algorithmForFirstState(std::vector<double> &RF_data_rate_vector,
     }
 
     // if connected to VLC AP -> OFDMA
-    for (int i = 0; i < VLC_AP_num; i++) {
-        std::vector<double> data_rate = OFDMA(i, served_UE, VLC_data_rate_matrix);
+    for (int i = RF_AP_num; i < VLC_AP_num + RF_AP_num; i++) {
+        std::vector<double> data_rate = OFDMA(i, served_UE[i], VLC_data_rate_matrix);
 
-        for (int j = 0; j < served_UE.size(); j++)
-            throughput[served_UE[j]] = data_rate[j];
+        for (int j = 0; j < served_UE[i].size(); j++)
+            throughput[served_UE[i][j]] = data_rate[j];
     }
 
     updateResourceAllocation(my_UE_list, throughput);
@@ -122,7 +128,7 @@ void algorithmForFirstState(std::vector<double> &RF_data_rate_vector,
 
 void algorithmExceptFirstState(std::vector<double> &RF_data_rate_vector,
                                 std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                                std::vector<std::vector<double>> &AP_association_matrix,
+                                std::vector<std::vector<int>> &AP_association_matrix,
                                 std::vector<MyUeNode> &my_UE_list)
 {
     // step1: construct strategy sets of the form {RF_AP, best VLC_AP} for all UE
@@ -170,8 +176,11 @@ void algorithmExceptFirstState(std::vector<double> &RF_data_rate_vector,
 
         if (random_number < probability_of_mutation) { // mutation occurs
             if (my_UE_list[i].getPrevAssociatedAP() == 0) { // previous AP is RF AP
-                std::vector<int> served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][1]);
-                std::vector<double> estimated_payoff_vec = OFDMA(strategy_set[i][1], served_UE.push_back(i), VLC_data_rate_matrix);
+                std::vector<int> prev_served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][1]);
+
+                prev_served_UE.push_back(i);
+                std::vector<double> estimated_payoff_vec = OFDMA(strategy_set[i][1], prev_served_UE, VLC_data_rate_matrix);
+
                 double estimated_payoff = estimated_payoff_vec.back() * VHO_efficiency;
 
                 if (estimated_payoff > my_UE_list[i].getLastThroughput())
@@ -180,8 +189,8 @@ void algorithmExceptFirstState(std::vector<double> &RF_data_rate_vector,
                     serving_AP[i] = my_UE_list[i].getCurrAssociatedAP();
             }
             else { // previous AP is VLC AP
-                std::vector<int> served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][0]);
-                double estimated_payoff = RF_data_rate_vector(served_UE.size()+1);
+                std::vector<int> prev_served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][0]);
+                double estimated_payoff = RF_data_rate_vector[prev_served_UE.size()+1];
 
                 if (estimated_payoff > my_UE_list[i].getLastThroughput())
                     serving_AP[i] = strategy_set[i][0];
@@ -194,11 +203,11 @@ void algorithmExceptFirstState(std::vector<double> &RF_data_rate_vector,
         }
     }
 
-    updateApAssociationResult(my_UE_list, serving_AP, AP_sssociation_matrix);
+    updateApAssociationResult(my_UE_list, serving_AP, AP_association_matrix);
 
     // step3: Resource allocation
     std::vector<double> throughput (UE_num, 0.0);
-    std::vector<std::vector<int>> served_UE (RF_AP_num + VLC_AP_num, std::vector<int>);
+    std::vector<std::vector<int>> served_UE (RF_AP_num + VLC_AP_num, std::vector<int> ());
 
     for (int i = 0; i < RF_AP_num+VLC_AP_num; i++)
         served_UE[i] = constructServedUeSet(AP_association_matrix, i);
@@ -212,17 +221,17 @@ void algorithmExceptFirstState(std::vector<double> &RF_data_rate_vector,
     }
 
     // if connected to VLC AP -> OFDMA
-    for (int i = 0; i < VLC_AP_num; i++) {
-        std::vector<double> data_rate = OFDMA(i, served_UE, VLC_data_rate_matrix);
+    for (int i = RF_AP_num; i < VLC_AP_num + RF_AP_num; i++) {
+        std::vector<double> data_rate = OFDMA(i, served_UE[i], VLC_data_rate_matrix);
 
-        for (int j = 0; j < served_UE.size(); j++)
-            throughput[served_UE[j]] = data_rate[j];
+        for (int j = 0; j < served_UE[i].size(); j++)
+            throughput[served_UE[i][j]] = data_rate[j];
     }
 
     updateResourceAllocation(my_UE_list, throughput);
 }
 
-std::vector<int> constructServedUeSet(std::vector<std::vector<double>> &AP_association_matrix, int AP_index)
+std::vector<int> constructServedUeSet(std::vector<std::vector<int>> &AP_association_matrix, int AP_index)
 {
     std::vector<int> result;
 
@@ -239,7 +248,7 @@ std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vec
 {
     int m = subcarrier_num / 2;
     std::vector<double> aggregate_data_rate (served_UE.size(), 0.0);
-    std::vector<std::vector<double>> subcarrier_num (served_UE.size(), std::vector<double> (m+1, 0.0));
+    std::vector<std::vector<double>> subcarriers (served_UE.size(), std::vector<double> (m+1, 0.0));
     std::vector<double> output_data_rate (served_UE.size(), 0.0);
 
 
@@ -248,7 +257,7 @@ std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vec
             if (m > subcarrier_num / 2)
                 aggregate_data_rate[i] = 0;
             else {
-                aggregate_data_rate[i] = subcarrier_num[i][m] * VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] + aggregate_data_rate[i];
+                aggregate_data_rate[i] = subcarriers[i][m] * VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] + aggregate_data_rate[i];
             }
         }
 
@@ -260,7 +269,7 @@ std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vec
         }
 
         for (int i = 0; i < served_UE.size(); i++) {
-            subcarrier_num[i][m] = (VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] / sum_data_rate) *
+            subcarriers[i][m] = (VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] / sum_data_rate) *
                                     (time_slot_num + aggregate_data_rate_to_data_rate_sum) -
                                     (aggregate_data_rate[i] / VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m]);
         }
@@ -269,7 +278,7 @@ std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vec
 
     for (int i = 0; i < served_UE.size(); i++) {
         for (int j = 2; j <= subcarrier_num / 2; j++)
-            output_data_rate[i] += subcarrier_num[i][j] * VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][k];
+            output_data_rate[i] += subcarriers[i][j] * VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][j];
     }
 
     return output_data_rate;

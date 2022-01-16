@@ -4,11 +4,11 @@
 #include <chrono>
 
 
-#include "My_UE_Node.h"
+#include "my_UE_node.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
-#include "global_environment.h"
+#include "global_configuration.h"
 
 
 using namespace ns3;
@@ -17,19 +17,19 @@ using namespace ns3;
 MyUeNode::MyUeNode(int node_ID, Vector pos, double required_data_rate, double orientation_angle)
     : generator(std::chrono::system_clock::now().time_since_epoch().count()), distribution(0.0, sqrt(noise_variance))
     {
-        this.node_ID = node_ID;
-        this.pos = pos;
-        this.required_data_rate = required_rate;
-        this.orientation_angle = orientation_angle;
+        this->node_ID = node_ID;
+        this->pos = pos;
+        this->required_data_rate = required_data_rate;
+        this->orientation_angle = orientation_angle;
 
         avg_throughput = 0;
         prev_associated_AP = -1;
-        cur_associated_AP = -1;
+        curr_associated_AP = -1;
         SINR = 0;
     }
 
 int MyUeNode::getID(void) {
-    reutrn node_id;
+    return node_ID;
 }
 
 void MyUeNode::setPosition(Vector pos_from_mobility_model) {
@@ -61,12 +61,12 @@ double MyUeNode::getLastThroughput(void) {
 }
 
 void MyUeNode::setCurrAssociatedAP(int associated_AP_index) {
-    prev_associated_AP = cur_associated_AP;
-    cur_associated_AP = associated_AP_index;
+    prev_associated_AP = curr_associated_AP;
+    curr_associated_AP = associated_AP_index;
 }
 
 int MyUeNode::getCurrAssociatedAP(void) {
-    return cur_associated_AP;
+    return curr_associated_AP;
 }
 
 int MyUeNode::getPrevAssociatedAP(void) {

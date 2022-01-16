@@ -8,7 +8,7 @@
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 #include "install_mobility.h"
-#include "global_environment.h"
+#include "global_configuration.h"
 
 
 
@@ -24,13 +24,13 @@ void installRfApMobility(NodeContainer &RF_AP_node) {
     MobilityHelper RF_AP_mobility;
     Ptr<ListPositionAllocator> RF_AP_pos_list = CreateObject<ListPositionAllocator>();
 
-    // assume the center of the room is origin
+    // assume that the center of the room is at origin
     RF_AP_pos_list->Add(Vector(0, 0, RF_AP_height));
 
     RF_AP_mobility.SetPositionAllocator(RF_AP_pos_list);
 
-    RF_AP_Mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
-    RF_AP_Mobility.Install(RF_AP_Node);
+    RF_AP_mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+    RF_AP_mobility.Install(RF_AP_node);
 }
 
 
@@ -89,8 +89,8 @@ void installUeMobility(NodeContainer &UE_nodes) {
     pos.Set("X", StringValue(ssPos.str()));
     pos.Set("Y", StringValue(ssPos.str()));
 
-    Ptr<PositionAllocator> position_allocator = pos.Create())->GetObject<PositionAllocator>();
-    UE_Mobility.SetPositionAllocator(position_allocator);
+    Ptr<PositionAllocator> position_allocator = (pos.Create())->GetObject<PositionAllocator>();
+    UE_mobility.SetPositionAllocator(position_allocator);
 
 
     // set mobility model
@@ -100,15 +100,15 @@ void installUeMobility(NodeContainer &UE_nodes) {
     ss_speed << "ns3::UniformRandomVariable[Min=" << 0 << "|Max=" << avg_speed * 2 << "]";
 
     // - the random variable for pause time
-    std::stringstream ssPause;
-    ssPause << "ns3::UniformRandomVariable[Min=0.0|Max=" << pause_time << "]";
+    std::stringstream ss_pause;
+    ss_pause << "ns3::UniformRandomVariable[Min=0.0|Max=" << pause_time << "]";
 
-    UE_Mobility.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
-                                  "Speed", StringValue (ssSpeed.str ()),
-                                  "Pause", StringValue (ssPause.str ()),
+    UE_mobility.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
+                                  "Speed", StringValue(ss_speed.str()),
+                                  "Pause", StringValue(ss_pause.str()),
                                   "PositionAllocator", PointerValue(position_allocator));
 
-    VLC_AP_mobility.Install(UE_nodes);
+    UE_mobility.Install(UE_nodes);
 }
 
 
