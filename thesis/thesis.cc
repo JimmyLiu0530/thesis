@@ -111,6 +111,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
                        NodeContainer &UE_nodes,
                        std::vector<MyUeNode> &my_UE_list)
 {
+    std::cout << "updateToNextState\n";
 #if(PROPOSED_METHOD)
 
     proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
@@ -279,10 +280,10 @@ int main(int argc, char *argv[])
     // }
 
 
-    Simulator::ScheduleNow(&updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
+    Simulator::Schedule(Seconds(0.0), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
 
 
-    Simulator::Stop(Seconds(1.0)); // change Minutes to Seconds to check correctness
+    Simulator::Stop(Minutes(2.0)); // change Minutes to Seconds to check correctness
     Simulator::Run();
 
 

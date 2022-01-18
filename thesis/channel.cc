@@ -77,7 +77,7 @@ double getIrradianceAngle(Ptr<Node> AP, Ptr<Node> UE) {
     return atan(plane_dist / height_diff);
 }
 
-// cosψ = a*sin(θ) + b*cos(θ)
+// cosψ = 1/d((x_a-x_u)sinθ+(z_a-z_u)cosθ)
 double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
     double theta = getRandomOrientation(UE_node);
 
@@ -87,21 +87,17 @@ double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_no
     Ptr<MobilityModel> UE_mobility = UE->GetObject<MobilityModel>();
     Vector UE_curr_pos = UE_mobility->GetPosition();
     UE_node.setPosition(UE_curr_pos);
-
-    Ptr<RandomWaypointMobilityModel> rand_UE_mobility = StaticCast<RandomWaypointMobilityModel, MobilityModel> (UE_mobility);
-    Vector UE_next_pos = rand_UE_mobility->next_position;
-
-    double Omega = atan((UE_next_pos.y - UE_curr_pos.y) / (UE_next_pos.x - UE_curr_pos.x));
+    std::cout << "UE position: (" << UE_curr_pos.x << ", " << UE_curr_pos.y << ", " << UE_curr_pos.z << ")\n";
 
     double AP_UE_dx = AP_pos.x - UE_curr_pos.x;
     double AP_UE_dy = AP_pos.y - UE_curr_pos.y;
     double AP_UE_dz = AP_pos.z - UE_curr_pos.z;
-    double d = sqrt(AP_UE_dx*AP_UE_dx + AP_UE_dy*AP_UE_dy + AP_UE_dz*AP_UE_dz);
+    double dist = sqrt(AP_UE_dx*AP_UE_dx + AP_UE_dy*AP_UE_dy + AP_UE_dz*AP_UE_dz);
 
-    double a = -1 * (AP_UE_dx/d) * cos(Omega) - (AP_UE_dy/d) * sin(Omega);
-    double b = (AP_UE_dz) / d;
+    double first_term = AP_UE_dx * sin(theta) / dist;
+    double second_term = AP_UE_dz * cos(theta) / dist;
 
-    return a * sin(theta) + b * cos(theta);
+    return first_term + second_term;
 }
 
 // θ
