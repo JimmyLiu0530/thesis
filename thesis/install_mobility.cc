@@ -78,9 +78,9 @@ void installUeMobility(NodeContainer &UE_nodes) {
 
     MobilityHelper UE_mobility;
 
-    // set position allocator for random waypoints
+    // set 3D position allocator for random waypoints
     ObjectFactory pos;
-    pos.SetTypeId("ns3::RandomRectanglePositionAllocator");
+    pos.SetTypeId("ns3::RandomBoxPositionAllocator");
 
     std::stringstream ssPos;
     ssPos << "ns3::UniformRandomVariable[Min=" << -room_size / 2 << "|Max=" << room_size / 2 << "]";
@@ -88,13 +88,13 @@ void installUeMobility(NodeContainer &UE_nodes) {
     // set an attribute to be set during construction
     pos.Set("X", StringValue(ssPos.str()));
     pos.Set("Y", StringValue(ssPos.str()));
+    pos.Set("Z", StringValue("ns3::ConstantRandomVariable[Constant=1.5]"));
 
     Ptr<PositionAllocator> position_allocator = (pos.Create())->GetObject<PositionAllocator>();
     UE_mobility.SetPositionAllocator(position_allocator);
 
 
     // set mobility model
-
     // - the random variable for user speed
     std::stringstream ss_speed;
     ss_speed << "ns3::UniformRandomVariable[Min=" << 0 << "|Max=" << avg_speed * 2 << "]";

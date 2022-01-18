@@ -127,9 +127,10 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     std::sort(my_UE_list.begin(),my_UE_list.end(),[](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
 
-
+    /*
     if(!Simulator::IsFinished())
     Simulator::Schedule(MilliSeconds(time_period), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
+    */
 }
 
 
@@ -185,6 +186,10 @@ int main(int argc, char *argv[])
 #endif
 
     std::vector<MyUeNode> my_UE_list = initializeMyUeNodeList(UE_nodes);
+
+#if DEBUG_MODE
+    printMyUeList(my_UE_list);
+#endif
 
     /** add ip/tcp stack to all nodes.**/
     // InternetStackHelper internet;
@@ -273,11 +278,14 @@ int main(int argc, char *argv[])
     //   }
     // }
 
-    Simulator::Schedule(Seconds(0.0),&updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
+
+    Simulator::ScheduleNow(&updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
 
 
-    Simulator::Stop(Minutes(2));
+    Simulator::Stop(Seconds(1.0)); // change Minutes to Seconds to check correctness
     Simulator::Run();
+
+
 
 
     /*

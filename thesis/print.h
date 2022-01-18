@@ -1,6 +1,7 @@
 #ifndef PRINT_H
 #define PRINT_H
 
+#include "my_UE_node.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
@@ -27,5 +28,7 @@ void printRfApPosition(ns3::NodeContainer &RF_AP_node);
 void printVlcApPosition(ns3::NodeContainer &VLC_AP_nodes);
 
 void printUePosition(ns3::NodeContainer &UE_nodes);
+
+void printMyUeList(std::vector<MyUeNode> &my_UE_list);
 
 #endif

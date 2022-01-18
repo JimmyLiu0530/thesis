@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 #define PI 3.14159265359
 #define PROPOSED_METHOD 0
 
@@ -11,7 +11,7 @@ const double room_size = 16;
 const int RF_AP_num = 1;
 const int VLC_AP_num = 16;
 const int VLC_AP_per_row = 4;
-const int UE_num = 200;
+const int UE_num = 20;
 const double time_period = 500; // ms
 const double avg_speed = 1.0;
 const double pause_time = 0.0;

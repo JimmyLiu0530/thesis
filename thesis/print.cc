@@ -233,3 +233,13 @@ void printUePosition(ns3::NodeContainer &UE_nodes) {
     std::cout << std::endl;
 }
 
+void printMyUeList(std::vector<MyUeNode> &my_UE_list) {
+    for (int i = 0; i < my_UE_list.size(); i++) {
+        std::cout << "node id: " << my_UE_list[i].getID() << std::endl;
+        Vector pos = my_UE_list[i].getPosition();
+        std::cout << "position is (" << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
+        std::cout << "demand is " << my_UE_list[i].getRequiredDataRate() << std::endl;
+        std::cout << "orientation angle is " << my_UE_list[i].getOrientationAngle() << std::endl << std::endl;
+    }
+}
+

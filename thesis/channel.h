@@ -11,6 +11,15 @@ using namespace ns3;
 
 
 
+/*
+    distance and angle calculation
+*/
+double radian2Degree(const double &radian);
+double degree2Radian(const double &degree);
+double getDistance(Ptr<Node> AP, MyUeNode &UE_node); // in meters
+double getIrradianceAngle(Ptr<Node> AP, Ptr<Node> UE); // in radians
+double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node);
+double getRandomOrientation(MyUeNode &UE_node);
 
 
 /*
@@ -26,25 +35,14 @@ void precalculation(NodeContainer &RF_AP_node ,
                       std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                       std::vector<MyUeNode> &my_UE_list);
 
-
-/*
-    distance and angle calculation
-*/
-double radian2Degree(const double &radian);
-double degree2Radian(const double &degree);
-double getDistance(Ptr<Node> AP, MyUeNode &UE); // in meters
-double getIrradianceAngle(Ptr<Node> AP, Ptr<Node> UE); // in radians
-double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP_node, Ptr<Node> UE_node, MyUeNode &UE);
-double getRandomOrientation(MyUeNode &UE);
-
-
 /*
     channel gain
 */
 // VLC
 // line of sight
-double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE_node, MyUeNode &UE);
-double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<MyUeNode> &myUElist, std::vector<std::vector<double>> &VLC_LOS_matrix);
+double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node);
+double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes, std::vector<MyUeNode> &my_UE_list, std::vector<std::vector<double>> &VLC_LOS_matrix);
+
 //front-end
 double estimateOneVlcFrontEnd(int subcarrier_index);
 

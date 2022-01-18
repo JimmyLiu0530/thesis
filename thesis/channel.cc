@@ -2,12 +2,15 @@
 
 
 #include "channel.h"
+#include "print.h"
+#include "my_UE_node.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
-#include "my_UE_node.h"
 
 
+
+static int counter = 0;
 
 /*
     table of conversion from SINR to spectral efficiency
@@ -16,51 +19,6 @@ const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency
                                                                                      {8.0, 1.9141}, {9.0, 2.4063}, {11.0, 2.7305},
                                                                                      {12.0, 3.3223}, {14.0, 3.9023}, {16.0, 4.5234},
                                                                                      {18.0, 5.1152}, {20.0, 5.5547} };
-
-
-
-static int counter = 0;
-
-
-void precalculation(NodeContainer  &RF_AP_node,
-                      NodeContainer  &VLC_AP_nodes,
-                      NodeContainer  &UE_nodes,
-                      std::vector<std::vector<double>> &VLC_LOS_matrix,
-                      std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
-                      std::vector<double> &RF_data_rate_vector,
-                      std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                      std::vector<MyUeNode> &my_UE_list)
-{
-    calculateAllVlcLightOfSight(VLC_AP_nodes, UE_nodes, my_UE_list, VLC_LOS_matrix);
-
-#if DEBUG_MODE
-    print_VLC_LOS_Matrix(VLC_Channel_Gain_Matrix);
-#endif
-
-    calculateAllVlcSINR(VLC_LOS_matrix, VLC_SINR_matrix);
-
-#if DEBUG_MODE
-    print_VLC_SINR_Matrix(VLC_SINR_Matrix);
-#endif
-
-    // data rate for RF
-    //
-    // since RF data rate only depends on the number of serving UE,
-    // here we pre-calculate all possible data rates under different number of serving UEs,
-    // thus we do this once and for all
-    if (!counter) {
-        counter++;
-        calculateRfDataRate(RF_data_rate_vector);
-    }
-    // data rate for VLC
-    calculateAllVlcDataRate(VLC_SINR_matrix, VLC_data_rate_matrix);
-
-#if DEBUG_MODE
-    print_RF_DataRate_Matrix(RF_DataRate_Matrix);
-    print_VLC_DataRate_Matrix(VLC_DataRate_Matrix);
-  #endif
-}
-
 
 
 /*
@@ -75,10 +33,11 @@ double degree2Radian(const double &degree) {
     return degree * PI / 180;
 }
 
-double getDistance(Ptr<Node> AP, MyUeNode &UE) {
+double getDistance(Ptr<Node> AP, MyUeNode &UE_node) {
     Ptr<MobilityModel> AP_mobility_model = AP->GetObject<MobilityModel>();
     Vector AP_pos = AP_mobility_model->GetPosition();
-    Vector UE_pos = UE.getPosition();
+
+    Vector UE_pos = UE_node.getPosition();
 
     double dx = AP_pos.x - UE_pos.x;
     double dy = AP_pos.y - UE_pos.y;
@@ -119,18 +78,18 @@ double getIrradianceAngle(Ptr<Node> AP, Ptr<Node> UE) {
 }
 
 // cosψ = a*sin(θ) + b*cos(θ)
-double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP_node, Ptr<Node> UE_node, MyUeNode &UE) {
-    double theta = getRandomOrientation(UE);
+double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
+    double theta = getRandomOrientation(UE_node);
 
-    Ptr<MobilityModel> VLC_AP_mobility = VLC_AP_node->GetObject<MobilityModel>();
+    Ptr<MobilityModel> VLC_AP_mobility = VLC_AP->GetObject<MobilityModel>();
     Vector AP_pos = VLC_AP_mobility->GetPosition();
 
-    Ptr<MobilityModel> UE_mobility = UE_node->GetObject<MobilityModel>();
+    Ptr<MobilityModel> UE_mobility = UE->GetObject<MobilityModel>();
     Vector UE_curr_pos = UE_mobility->GetPosition();
-    UE.setPosition(UE_curr_pos);
+    UE_node.setPosition(UE_curr_pos);
 
     Ptr<RandomWaypointMobilityModel> rand_UE_mobility = StaticCast<RandomWaypointMobilityModel, MobilityModel> (UE_mobility);
-    Vector UE_next_pos = rand_UE_mobility->GetNextPosition();
+    Vector UE_next_pos = rand_UE_mobility->next_position;
 
     double Omega = atan((UE_next_pos.y - UE_curr_pos.y) / (UE_next_pos.x - UE_curr_pos.x));
 
@@ -146,9 +105,50 @@ double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP_node, Ptr<Node> UE_node, MyUeN
 }
 
 // θ
-double getRandomOrientation(MyUeNode &UE) {
-    UE.randomAnOrientationAngle();
-    return UE.getOrientationAngle();
+double getRandomOrientation(MyUeNode &UE_node) {
+    UE_node.randomAnOrientationAngle();
+    return UE_node.getOrientationAngle();
+}
+
+
+
+void precalculation(NodeContainer  &RF_AP_node,
+                      NodeContainer  &VLC_AP_nodes,
+                      NodeContainer  &UE_nodes,
+                      std::vector<std::vector<double>> &VLC_LOS_matrix,
+                      std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+                      std::vector<double> &RF_data_rate_vector,
+                      std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                      std::vector<MyUeNode> &my_UE_list)
+{
+    calculateAllVlcLightOfSight(VLC_AP_nodes, UE_nodes, my_UE_list, VLC_LOS_matrix);
+
+#if DEBUG_MODE
+    printVlcLosMatrix(VLC_LOS_matrix);
+#endif
+
+    calculateAllVlcSINR(VLC_LOS_matrix, VLC_SINR_matrix);
+
+#if DEBUG_MODE
+    printVlcSinrMatrix(VLC_SINR_matrix);
+#endif
+
+    // data rate for RF
+    //
+    // since RF data rate only depends on the number of serving UE,
+    // here we pre-calculate all possible data rates under different number of serving UEs,
+    // thus we do this once and for all
+    if (!counter) {
+        counter++;
+        calculateRfDataRate(RF_data_rate_vector);
+    }
+    // data rate for VLC
+    calculateAllVlcDataRate(VLC_SINR_matrix, VLC_data_rate_matrix);
+
+#if DEBUG_MODE
+    printRfDataRateVector(RF_data_rate_vector);
+    printVlcDataRateMatrix(VLC_data_rate_matrix);
+  #endif
 }
 
 
@@ -156,17 +156,17 @@ double getRandomOrientation(MyUeNode &UE) {
     VLC channel gain, including LOS and front-end
 */
 // line of sight
-double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE_node, MyUeNode &UE) {
-    const double irradiance_angle = getIrradianceAngle(VLC_AP, UE_node); // the irradiance angle of the Tx (Φ)
+double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
+    const double irradiance_angle = getIrradianceAngle(VLC_AP, UE); // the irradiance angle of the Tx (Φ)
 
-    const double cosine_incidence_angle = getCosineOfIncidenceAngle(VLC_AP, UE_node, UE); // cos(ψ)
+    const double cosine_incidence_angle = getCosineOfIncidenceAngle(VLC_AP, UE, UE_node); // cos(ψ)
     if (radian2Degree(acos(cosine_incidence_angle)) > field_of_view / 2)
         return 0.0;
 
 
     const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view/2)), 2);
     const double lambertian_coefficient = (-1) / (log(cos(degree2Radian(PHI_half))));
-    const double distance = getDistance(VLC_AP, UE);
+    const double distance = getDistance(VLC_AP, UE_node);
 
     double line_of_sight = (lambertian_coefficient+1) * receiver_area / (2 * PI * pow(distance, 2));
     line_of_sight = line_of_sight * concentrator_gain;
@@ -177,12 +177,10 @@ double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE_node, MyUeNode 
     return line_of_sight;
 }
 
-double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes,std::vector<MyUeNode> &myUElist, std::vector<std::vector<double>> &VLC_LOS_matrix) {
-    for (int i = 0; i < VLC_AP_num; i++)
-	{
-		for (int j = 0; j < UE_num; j++)
-		{
-			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), UE_nodes.Get(j), myUElist[j]);
+double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes,std::vector<MyUeNode> &my_UE_list, std::vector<std::vector<double>> &VLC_LOS_matrix) {
+    for (int i = 0; i < VLC_AP_num; i++) {
+		for (int j = 0; j < UE_num; j++) {
+			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), UE_nodes.Get(j), my_UE_list[j]);
 		}
 	}
 }
