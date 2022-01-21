@@ -28,7 +28,7 @@ void printRfChannelGainMatrix(std::vector<std::vector<double>> &RF_channel_gain_
 
 void printVlcLosMatrix(std::vector<std::vector<double>> &VLC_LOS_matrix)
 {
-    std::cout << "VLC channel gain matrix as below : " << std::endl;
+    std::cout << "VLC LOS matrix as below : " << std::endl;
 
     for (int i = 0; i < VLC_AP_num; i++)
     {
@@ -36,7 +36,7 @@ void printVlcLosMatrix(std::vector<std::vector<double>> &VLC_LOS_matrix)
         for (int j = 0; j < UE_num; j++)
         {
 
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_LOS_matrix[i][j] << " ";
+            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(10) << VLC_LOS_matrix[i][j] << " ";
         }
 
         std::cout << std::endl;
@@ -75,11 +75,11 @@ void printVlcSinrMatrix(std::vector<std::vector<std::vector<double>>> &VLC_SINR_
         for (int j = 0; j < UE_num; j++)
         {
             std::cout << "\tFor UE " << j << ": \n";
-            std::cout << "\t\t";
+            std::cout << "\t";
             for (int k = 0; k < subcarrier_num; k++)
             {
 
-                std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_SINR_matrix[i][j][k] << " ";
+                std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(4) << VLC_SINR_matrix[i][j][k] << " ";
             }
 
             std::cout << std::endl;
@@ -104,7 +104,7 @@ void printRfDataRateVector(std::vector<double> &RF_data_rate_vector)
         std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << RF_data_rate_vector[i] << " ";
     }
 
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
 }
 
 
@@ -119,16 +119,16 @@ void printVlcDataRateMatrix(std::vector<std::vector<std::vector<double>>> &VLC_d
         for (int j = 0; j < UE_num; j++)
         {
             std::cout << "\tFor UE " << j << ": \n";
-            std::cout << "\t\t";
+            std::cout << "\t";
             for (int k = 0; k < subcarrier_num; k++)
             {
                 //速度 < 1 的太小了 show出來沒意義
                 //視爲 0
                 if (VLC_data_rate_matrix[i][j][k] > 1.0)
-                    std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_data_rate_matrix[i][j][k] << " ";
+                    std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_data_rate_matrix[i][j][k] << " ";
 
                 else
-                    std::cout << std::left << std::setw(6) << std::setiosflags(std::ios::fixed) << std::setprecision(2) << 0 << " ";
+                    std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << 0 << " ";
 
             }
 

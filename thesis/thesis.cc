@@ -53,20 +53,20 @@
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("TcpLargeTransfer");
-std::vector<double> Received(1, 0);
-std::vector<double> theTime(1, 0);
+std::vector<double> Received(1, 0.0);
+std::vector<double> theTime(1, 0.0);
 
 std::vector<std::vector<int>> AP_association_matrix(RF_AP_num+VLC_AP_num, std::vector<int> (UE_num+1, 0));
 
-std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> (UE_num, 0));
+std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> (UE_num, 0.0));
 
-std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0)));
+std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0)));
 
-std::vector<double> RF_data_rate_vector(UE_num+1, 0);
-std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0)));
+std::vector<double> RF_data_rate_vector(UE_num+1, 0.0);
+std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0)));
 
-std::vector<double> avg_throughput_per_UE(UE_num, 0);
-std::vector<double> avg_satisfaction_per_UE(UE_num, 0);
+std::vector<double> avg_throughput_per_UE(UE_num, 0.0);
+std::vector<double> avg_satisfaction_per_UE(UE_num, 0.0);
 
 
 
@@ -111,7 +111,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
                        NodeContainer &UE_nodes,
                        std::vector<MyUeNode> &my_UE_list)
 {
-    std::cout << "updateToNextState\n";
+    std::cout << "updateToNextState(" << state << ")\n";
 #if(PROPOSED_METHOD)
 
     proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
@@ -128,10 +128,10 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     std::sort(my_UE_list.begin(),my_UE_list.end(),[](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
 
-    /*
+
     if(!Simulator::IsFinished())
     Simulator::Schedule(MilliSeconds(time_period), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
-    */
+
 }
 
 
@@ -282,8 +282,8 @@ int main(int argc, char *argv[])
 
     Simulator::Schedule(Seconds(0.0), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
 
-
-    Simulator::Stop(Minutes(2.0)); // change Minutes to Seconds to check correctness
+    std::cout << "simulation start\n";
+    Simulator::Stop(Seconds(2.0)); // change Minutes to Seconds to check correctness
     Simulator::Run();
 
 

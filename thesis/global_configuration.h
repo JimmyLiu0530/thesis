@@ -4,7 +4,7 @@
 #include <cmath>
 
 #define DEBUG_MODE 1
-#define PI 3.14159265359
+#define PI 3.14159265
 #define PROPOSED_METHOD 0
 
 const double room_size = 16;
@@ -28,7 +28,7 @@ const double RF_AP_height = 3.5;
 const double VLC_AP_height = 3.5;
 const int VLC_AP_power = 9;
 const int VLC_AP_bandwidth = 40; // MHz
-const double noise_power_spectral_density = 1e-19;  //N_0
+const double noise_power_spectral_density = 1e-13;  //N_0 = 1e-19 A/Hz = 1e-13 A/MHz
 const double conversion_efficiency = 0.53; // optical to electrical conversion efficiency
 const double optical_to_electric_power_ratio = 3; // κ
 
@@ -49,11 +49,11 @@ const double HDU_proportion = 0.5; // proportion of high-demand user
 /*
     VLC channel
 */
-const double field_of_view = 180;
-const int PHI_half = 60; // semi-angle at half-illumination (phi_1/2)
-const int filter_gain = 1;
+const double field_of_view = 180.0;
+const double PHI_half = 60.0; // semi-angle at half-illumination (phi_1/2)
+const double filter_gain = 1.0;
 const double refractive_index = 1.5;
-const double receiver_area = 0.0001; // m^2
+const double receiver_area = 1e-4; // 1 cm^2 = 0.0001 m^2
 const double reflection_efficiency = 0.75;
 const double fitting_coefficient = 2.88;
 const double three_dB_cutoff = 30; // MHz
@@ -89,8 +89,8 @@ const double sampling_time = 13.0; // ms
 const double angle_mean = 30.0; // degree
 const double angle_variance = 7.78; // degree
 const double c_1 = pow(0.05, sampling_time/coherence_time);
-const double c_0 = (1 - c_1) * angle_mean;
-const double noise_variance = (1 - c_1 * c_1) * angle_variance * angle_variance;
+const double c_0 = (1.0 - c_1) * angle_mean;
+const double noise_variance = (1.0 - c_1 * c_1) * angle_variance * angle_variance;
 
 
 /*

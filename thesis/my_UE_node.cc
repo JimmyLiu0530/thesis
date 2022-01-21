@@ -13,7 +13,7 @@
 
 using namespace ns3;
 
-
+// w[n] is a white noise process, which is a random process of random variables that are uncorrelated, have mean zero, and a finite variance
 MyUeNode::MyUeNode(int node_ID, Vector pos, double required_data_rate, double orientation_angle)
     : generator(std::chrono::system_clock::now().time_since_epoch().count()), distribution(0.0, sqrt(noise_variance))
     {
@@ -118,9 +118,9 @@ double MyUeNode::getOrientationAngle(void) {
     return orientation_angle;
 }
 
+// θ[k] = c_0 + c_1*θ[k-1] + w[k] based on (22) in "Realistic ..." paper
 void MyUeNode::randomAnOrientationAngle(void) {
-    double new_angle = c_0 + c_1 * orientation_angle + distribution(generator); // based on (22) in "Realistic ..." paper
-
+    double new_angle = c_0 + c_1 * orientation_angle + distribution(generator);
     orientation_angle = new_angle;
 }
 
