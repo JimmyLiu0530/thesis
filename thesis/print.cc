@@ -36,7 +36,7 @@ void printVlcLosMatrix(std::vector<std::vector<double>> &VLC_LOS_matrix)
         for (int j = 0; j < UE_num; j++)
         {
 
-            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(10) << VLC_LOS_matrix[i][j] << " ";
+            std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(15) << VLC_LOS_matrix[i][j] << " ";
         }
 
         std::cout << std::endl;
@@ -239,7 +239,8 @@ void printMyUeList(std::vector<MyUeNode> &my_UE_list) {
         Vector pos = my_UE_list[i].getPosition();
         std::cout << "position is (" << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
         std::cout << "demand is " << my_UE_list[i].getRequiredDataRate() << std::endl;
-        std::cout << "orientation angle is " << my_UE_list[i].getOrientationAngle() << std::endl << std::endl;
+        std::cout << "polar angle is " << my_UE_list[i].getPolarAngle() << std::endl;
+        std::cout << "azimuth angle is " << my_UE_list[i].getAzimuthAngle() << std::endl << std::endl;
     }
 }
 

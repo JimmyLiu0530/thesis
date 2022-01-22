@@ -16,7 +16,7 @@ class MyUeNode
 {
 
 public:
-    MyUeNode(int node_ID, Vector pos, double required_data_rate, double orientation_angle);
+    MyUeNode(int node_ID, Vector pos, double required_data_rate);
 
     int getID(void);
 
@@ -45,15 +45,17 @@ public:
     std::vector<double> getSatisfactionHistory(void);
     double calculateAvgSatisfaction(void);
 
-    double getOrientationAngle(void);
-    void randomAnOrientationAngle(void);
+    double getPolarAngle(void);
+    double getAzimuthAngle(void);
+    void randomOrientationAngle(Ptr<Node> UE);
 
 private:
     int node_ID;
     Vector pos;
     double required_data_rate;
     double avg_throughput;
-    double orientation_angle;
+    double polar_angle; // theta
+    double azimuth_angle; // little omega
     std::default_random_engine generator;
     std::normal_distribution<double> distribution;
 
@@ -63,6 +65,9 @@ private:
     double SINR;
     std::vector<double> throughput_per_iteration;
     std::vector<double> satisfaction_per_iteration;
+
+    void setPolarAngle(double new_polar_angle); // in rad
+    void setAzimuthAngle(double new_azimuth_angle); // in rad
 };
 
 #endif // MY_UE_NODE_H

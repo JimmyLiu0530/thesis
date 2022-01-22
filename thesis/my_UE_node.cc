@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <chrono>
+#include <cmath>
 
 
 #include "my_UE_node.h"
@@ -14,18 +15,19 @@
 using namespace ns3;
 
 // w[n] is a white noise process, which is a random process of random variables that are uncorrelated, have mean zero, and a finite variance
-MyUeNode::MyUeNode(int node_ID, Vector pos, double required_data_rate, double orientation_angle)
+MyUeNode::MyUeNode(int node_ID, Vector pos, double required_data_rate)
     : generator(std::chrono::system_clock::now().time_since_epoch().count()), distribution(0.0, sqrt(noise_variance))
     {
         this->node_ID = node_ID;
         this->pos = pos;
         this->required_data_rate = required_data_rate;
-        this->orientation_angle = orientation_angle;
 
-        avg_throughput = 0;
+        polar_angle = 0.0;
+        azimuth_angle = 0.0;
+        avg_throughput = 0.0;
         prev_associated_AP = -1;
         curr_associated_AP = -1;
-        SINR = 0;
+        SINR = 0.0;
     }
 
 int MyUeNode::getID(void) {
@@ -114,14 +116,40 @@ double MyUeNode::calculateAvgSatisfaction(void) {
     return satis_sum / satisfaction_per_iteration.size();
 }
 
-double MyUeNode::getOrientationAngle(void) {
-    return orientation_angle;
+void MyUeNode::setPolarAngle(double new_polar_angle) {
+    polar_angle = new_polar_angle;
 }
 
-// θ[k] = c_0 + c_1*θ[k-1] + w[k] based on (22) in "Realistic ..." paper
-void MyUeNode::randomAnOrientationAngle(void) {
-    double new_angle = c_0 + c_1 * orientation_angle + distribution(generator);
-    orientation_angle = new_angle;
+
+double MyUeNode::getPolarAngle(void) {
+    return polar_angle;
+}
+
+void MyUeNode::setAzimuthAngle(double new_azimuth_angle) {
+    azimuth_angle = new_azimuth_angle;
+}
+
+double MyUeNode::getAzimuthAngle(void) {
+    return azimuth_angle;
+}
+
+// θ[k] = c_0 + c_1*θ[k-1] + w[k] based on (22)
+// ω = Ω - π, where Ω is movement direction of users
+void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
+    double new_polar_angle = c_0 + c_1 * polar_angle + distribution(generator); // in degree
+    setPolarAngle(new_polar_angle / 180 * PI);
+
+    Ptr<MobilityModel> UE_mobility_model = UE->GetObject<MobilityModel>();
+    Vector UE_velocity = UE_mobility_model->GetVelocity();
+
+    if (UE_velocity.x == 0 && UE_velocity.y == 0)
+        setAzimuthAngle(-1*PI);
+    else if (UE_velocity.x == 0)
+        setAzimuthAngle(-0.5*PI); // 0.5*PI - PI
+    else {
+        double big_omega = atan(UE_velocity.y / UE_velocity.x); // in rad
+        setAzimuthAngle(big_omega-PI);
+    }
 }
 
 

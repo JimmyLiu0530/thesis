@@ -26,7 +26,7 @@ std::vector<MyUeNode> initializeMyUeNodeList(NodeContainer &UE_nodes)
         Ptr<MobilityModel> UE_mobility_model = (UE_nodes.Get(i))->GetObject<MobilityModel>();
         Vector pos = UE_mobility_model->GetPosition();
 
-        my_UE_list.push_back(MyUeNode(i, pos, required_data_rate, 0.0));
+        my_UE_list.push_back(MyUeNode(i, pos, required_data_rate));
     }
 
     return my_UE_list;

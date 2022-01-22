@@ -2,11 +2,12 @@
 #define GLOBAL_CONFIGURATION_H
 
 #include <cmath>
+#include <boost/math/constants/constants.hpp>
 
 #define DEBUG_MODE 1
-#define PI 3.14159265
 #define PROPOSED_METHOD 0
 
+const double PI = boost::math::constants::pi<double>();
 const double room_size = 16;
 const int RF_AP_num = 1;
 const int VLC_AP_num = 16;
@@ -15,6 +16,7 @@ const int UE_num = 2;
 const double time_period = 500; // ms
 const double avg_speed = 1.0;
 const double pause_time = 0.0;
+
 
 /*
     RF AP
@@ -27,12 +29,12 @@ const double RF_AP_height = 3.5;
 */
 const double VLC_AP_height = 3.5;
 const int VLC_AP_power = 9;
-const int VLC_AP_bandwidth = 40; // MHz
+const int VLC_AP_bandwidth = 100; // MHz
 const double noise_power_spectral_density = 1e-13;  //N_0 = 1e-19 A/Hz = 1e-13 A/MHz
 const double conversion_efficiency = 0.53; // optical to electrical conversion efficiency
 const double optical_to_electric_power_ratio = 3; // κ
 
-// these two values are found in "Resource Allocation in LiFi OFDMA Systems"
+// these values are found in "Resource Allocation in LiFi OFDMA Systems"
 const int subcarrier_num = 64; // M = 64
 const int effective_subcarrier_num = subcarrier_num / 2 - 1; // M_e = M/2 - 1
 const int time_slot_num = 20; // K
@@ -56,7 +58,7 @@ const double refractive_index = 1.5;
 const double receiver_area = 1e-4; // 1 cm^2 = 0.0001 m^2
 const double reflection_efficiency = 0.75;
 const double fitting_coefficient = 2.88;
-const double three_dB_cutoff = 30; // MHz
+const double three_dB_cutoff = 20; // MHz
 
 /*
     handover
@@ -70,14 +72,14 @@ const double HHO_efficiency = 0.9;
 const double channel_bit_rate = 1732; // Mbps
 const int max_backoff_stage = 1024;
 const double RTS_time = 0.16; // µs
-const double CTS_time = 0.14;
-const double header_time = 0.23;
-const double ACK_time = 0.14;
-const double SIFS_time = 28.0;
-const double PIFS_time = 80.0;
-const double DIFS_time = 128.0;
+const double CTS_time = 0.14; // µs
+const double header_time = 0.23; // µs
+const double ACK_time = 0.14; // µs
+const double SIFS_time = 28.0; // µs
+const double PIFS_time = 80.0; // µs
+const double DIFS_time = 128.0; // µs
 const double slot_time = 52.0; // It is not given in benchmark paper. I infer this value by PIFS = SIFS + slot time, which is defined in ieee 802.11.
-const double propagation_delay = 1.0;
+const double propagation_delay = 1.0; // µs
 const double utilization_ratio = 2.0; // ε
 
 

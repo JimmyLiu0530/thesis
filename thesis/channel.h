@@ -36,7 +36,6 @@ double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_n
 */
 double getIrradianceAngle(Ptr<Node> AP, MyUeNode & UE_node); // in radians
 double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node);
-double getRandomOrientation(MyUeNode &UE_node);
 double radian2Degree(const double &radian);
 double degree2Radian(const double &degree);
 double getDistance(Ptr<Node> AP, MyUeNode &UE_node); // in meters

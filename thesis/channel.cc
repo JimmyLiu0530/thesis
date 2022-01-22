@@ -12,14 +12,18 @@
 
 
 static int counter = 0;
+static const double lambertian_coefficient = (-1) / (log2(cos(degree2Radian(PHI_half)))); // m
+static const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view/2)), 2);
+
 
 /*
     table of conversion from SINR to spectral efficiency
+
+    bit/s/Hz = 1e6 bit/s/MHz
 */
-const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {1.0, 0.877}, {3.0, 1.1758}, {5.0, 1.4766},
-                                                                                     {8.0, 1.9141}, {9.0, 2.4063}, {11.0, 2.7305},
-                                                                                     {12.0, 3.3223}, {14.0, 3.9023}, {16.0, 4.5234},
-                                                                                     {18.0, 5.1152}, {20.0, 5.5547} };
+const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {0.0, 0}, {1.0, 877000}, {3.0, 1175800}, {5.0, 1476600},
+                                                                                     {8.0, 1914100}, {9.0, 2406300}, {11.0, 2730500}, {12.0, 3322300},
+                                                                                     {14.0, 3902300}, {16.0, 4523400}, {18.0, 5115200}, {20.0, 5554700} };
 
 
 void precalculation(NodeContainer  &RF_AP_node,
@@ -62,6 +66,9 @@ void precalculation(NodeContainer  &RF_AP_node,
 }
 
 double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes,std::vector<MyUeNode> &my_UE_list, std::vector<std::vector<double>> &VLC_LOS_matrix) {
+    for (int i = 0; i < UE_num; i++)
+        my_UE_list[i].randomOrientationAngle(UE_nodes.Get(i));
+
     for (int i = 0; i < VLC_AP_num; i++) {
 		for (int j = 0; j < UE_num; j++) {
 			VLC_LOS_matrix[i][j] = estimateOneVlcLightOfSight(VLC_AP_nodes.Get(i), UE_nodes.Get(j), my_UE_list[j]);
@@ -75,12 +82,10 @@ double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &U
 // line of sight
 double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
     const double cosine_incidence_angle = getCosineOfIncidenceAngle(VLC_AP, UE, UE_node); // cos(ψ)
-    if (radian2Degree(acos(cosine_incidence_angle)) > field_of_view / 2) // or if (cosine_incidence_angle<0)
+    if (radian2Degree(acos(cosine_incidence_angle)) > field_of_view / 2) // incidence angle exceeds half of FoV
         return 0.0;
 
     const double irradiance_angle = getIrradianceAngle(VLC_AP, UE_node); // the irradiance angle(Φ) of the Tx (in rad)
-    const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view/2)), 2);
-    const double lambertian_coefficient = 1.0;//(-1) / (log2(cos(degree2Radian(PHI_half)))); // m
     const double distance = getDistance(VLC_AP, UE_node);
 
     double line_of_sight = (lambertian_coefficient+1) * receiver_area / (2 * PI * pow(distance, 2));
@@ -92,9 +97,33 @@ double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_n
     return line_of_sight;
 }
 
+// cosψ = 1/d((x_a-x_u)sinθcosω+(y_a-y_u)sinθsinω+(z_a-z_u)cosθ)
+double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
+    double polar_angle = UE_node.getPolarAngle();
+    double azimuth_angle = UE_node.getAzimuthAngle();
+
+    Ptr<MobilityModel> VLC_AP_mobility = VLC_AP->GetObject<MobilityModel>();
+    Vector AP_pos = VLC_AP_mobility->GetPosition();
+
+    Ptr<MobilityModel> UE_mobility = UE->GetObject<MobilityModel>();
+    Vector UE_curr_pos = UE_mobility->GetPosition();
+    UE_node.setPosition(UE_curr_pos);
+    std::cout << std::setprecision(15) << "UE position: (" << UE_curr_pos.x << ", " << UE_curr_pos.y << ", " << UE_curr_pos.z << ")\n";
+
+    double dx = AP_pos.x - UE_curr_pos.x;
+    double dy = AP_pos.y - UE_curr_pos.y;
+    double dz = AP_pos.z - UE_curr_pos.z;
+    double dist = sqrt(dx*dx + dy*dy + dz*dz);
+
+    double first_term = dx * sin(polar_angle) * cos(azimuth_angle);
+    double second_term = dy * sin(polar_angle) * sin(azimuth_angle);
+    double last_term = dz * cos(polar_angle);
+
+    return (first_term + second_term + last_term) / dist;
+}
+
 /*
     distance and angle calculation
-
 
        plane_dist
     AP----------
@@ -126,35 +155,6 @@ double getIrradianceAngle(Ptr<Node> AP, MyUeNode &UE_node) {
 
 }
 
-// cosψ = 1/d((x_a-x_u)sinθ+(z_a-z_u)cosθ)
-double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
-    double deg_theta = getRandomOrientation(UE_node); // in degree
-    double rad_theta = degree2Radian(deg_theta); // in rad
-
-    Ptr<MobilityModel> VLC_AP_mobility = VLC_AP->GetObject<MobilityModel>();
-    Vector AP_pos = VLC_AP_mobility->GetPosition();
-
-    Ptr<MobilityModel> UE_mobility = UE->GetObject<MobilityModel>();
-    Vector UE_curr_pos = UE_mobility->GetPosition();
-    UE_node.setPosition(UE_curr_pos);
-    std::cout << std::setprecision(10) << "UE position: (" << UE_curr_pos.x << ", " << UE_curr_pos.y << ", " << UE_curr_pos.z << ")\n";
-
-    double AP_UE_dx = AP_pos.x - UE_curr_pos.x;
-    double AP_UE_dy = AP_pos.y - UE_curr_pos.y;
-    double AP_UE_dz = AP_pos.z - UE_curr_pos.z;
-    double dist = sqrt(AP_UE_dx*AP_UE_dx + AP_UE_dy*AP_UE_dy + AP_UE_dz*AP_UE_dz);
-
-    double first_term = AP_UE_dx * sin(rad_theta) / dist;
-    double second_term = AP_UE_dz * cos(rad_theta) / dist;
-
-    return first_term + second_term;
-}
-
-// θ
-double getRandomOrientation(MyUeNode &UE_node) {
-    UE_node.randomAnOrientationAngle();
-    return UE_node.getOrientationAngle();
-}
 
 double radian2Degree(const double &radian) {
     return radian * 180.0 / PI;
@@ -201,7 +201,8 @@ double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int 
     double noise = pow(optical_to_electric_power_ratio, 2) * VLC_AP_bandwidth * noise_power_spectral_density;
     double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference+noise);
 
-    return SINR;
+    // change to logarithmic SINR
+    return (SINR == 0) ? 0 : 10*log10(SINR);
 }
 
 // front-end
