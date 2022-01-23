@@ -19,11 +19,11 @@ static const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degre
 /*
     table of conversion from SINR to spectral efficiency
 
-    bit/s/Hz = 1e6 bit/s/MHz
+    bit/s/Hz = 1 Mbit/s/MHz
 */
-const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {0.0, 0}, {1.0, 877000}, {3.0, 1175800}, {5.0, 1476600},
-                                                                                     {8.0, 1914100}, {9.0, 2406300}, {11.0, 2730500}, {12.0, 3322300},
-                                                                                     {14.0, 3902300}, {16.0, 4523400}, {18.0, 5115200}, {20.0, 5554700} };
+const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {0.0, 0}, {1.0, 0.877}, {3.0, 1.1758}, {5.0, 1.4766},
+                                                                                     {8.0, 1.9141}, {9.0, 2.4063}, {11.0, 2.7305}, {12.0, 3.3223},
+                                                                                     {14.0, 3.9023}, {16.0, 4.5234}, {18.0, 5.1152}, {20.0, 5.5547} };
 
 
 void precalculation(NodeContainer  &RF_AP_node,
@@ -152,7 +152,6 @@ double getIrradianceAngle(Ptr<Node> AP, MyUeNode &UE_node) {
     const double height_diff = AP_pos.z - UE_pos.z;
 
     return atan(plane_dist / height_diff);
-
 }
 
 
@@ -201,6 +200,7 @@ double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int 
     double noise = pow(optical_to_electric_power_ratio, 2) * VLC_AP_bandwidth * noise_power_spectral_density;
     double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference+noise);
 
+    //return SINR;
     // change to logarithmic SINR
     return (SINR == 0) ? 0 : 10*log10(SINR);
 }
@@ -210,50 +210,6 @@ double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int 
 double estimateOneVlcFrontEnd(int subcarrier_index) {
     return exp((-1) * subcarrier_index * VLC_AP_bandwidth / (subcarrier_num * fitting_coefficient * three_dB_cutoff));
 }
-
-
-/*
-    RF data rate for each UE connected to WiFi
-
-    NOTE:
-    - Slot time is not given in the benchmark.
-    - RTS/CTS is much shorter than SIFS, PIFS, and DIFS in the benchmark.
-    However, the situation is opposite in "Downlink and uplink resource allocation in IEEE 802.11 wireless LANs".
-*/
-void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
-    // for the case when no serving UE
-    RF_data_rate_vector.push_back(0);
-
-    for (int serving_UE_num = 1; serving_UE_num <= UE_num; serving_UE_num++) {
-        double downlink_utilization_eff = calculateRfDownlinkUtilizationEfficiency(serving_UE_num);
-        RF_data_rate_vector.push_back(channel_bit_rate * downlink_utilization_eff / serving_UE_num);
-    }
-}
-
-double calculateRfDownlinkUtilizationEfficiency(int serving_UE_num) {
-    double system_utilization = calculateRfSystemUtilization(serving_UE_num);
-
-    return system_utilization * utilization_ratio / (1+utilization_ratio);
-}
-
-double calculateRfSystemUtilization(int serving_UE_num) {
-    double t_c = RTS_time + DIFS_time;
-    double t_s = RTS_time + CTS_time + header_time + propagation_delay + ACK_time + 3*SIFS_time + DIFS_time;
-    double t_d = header_time + propagation_delay + ACK_time + SIFS_time + PIFS_time;
-
-    double p_c = 2 / (max_backoff_stage+1);
-    double p_t = 1 - pow(1-p_c, serving_UE_num+1);
-    double p_s = ((serving_UE_num+1) * p_c * pow(1-p_c, serving_UE_num)) / (p_t);
-    double p_d = (serving_UE_num - 1) / (2 * serving_UE_num * p_s);
-
-    double denominator = (1 - p_t) * slot_time;
-    denominator += p_t * p_s * (1 - p_d) * t_s;
-    denominator += p_t * p_s * p_d * t_d;
-    denominator += p_t * (1 - p_s) * t_c;
-
-    return (p_s * p_t * propagation_delay) / (denominator);
-}
-
 
 /*
     VLC data rate
@@ -266,7 +222,6 @@ void calculateAllVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_
 			}
 		}
 	}
-
 }
 
 // data rate of the RU on the certain subcarrier based on (6)
@@ -283,4 +238,48 @@ double getSpectralEfficiency(double SINR) {
     auto it = SINR_to_spectral_efficiency.lower_bound(SINR);
 
     return it->second;
+}
+
+
+/*
+    RF data rate for each UE connected to WiFi
+
+    NOTE:
+    - Slot time is not given in the benchmark.
+    - RTS/CTS is much shorter than SIFS, PIFS, and DIFS in the benchmark.
+    However, the situation is opposite in "Downlink and uplink resource allocation in IEEE 802.11 wireless LANs".
+*/
+void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
+    // for the case when no serving UE
+    RF_data_rate_vector[0] = 0.0;
+
+    for (int serving_UE_num = 1; serving_UE_num < UE_num+1; serving_UE_num++) {
+        double downlink_utilization_eff = calculateRfDownlinkUtilizationEfficiency(serving_UE_num);
+
+        RF_data_rate_vector[serving_UE_num] = channel_bit_rate * downlink_utilization_eff / serving_UE_num;
+    }
+}
+
+double calculateRfDownlinkUtilizationEfficiency(int serving_UE_num) {
+    double system_utilization = calculateRfSystemUtilization(serving_UE_num);
+
+    return system_utilization * utilization_ratio / (1 + utilization_ratio);
+}
+
+double calculateRfSystemUtilization(int serving_UE_num) {
+    double t_c = RTS_time + DIFS_time;
+    double t_s = RTS_time + CTS_time + header_time + propagation_delay + ACK_time + 3*SIFS_time + DIFS_time;
+    double t_d = header_time + propagation_delay + ACK_time + SIFS_time + PIFS_time;
+
+    double p_c = 2.0 / (max_backoff_stage + 1);
+    double p_t = 1 - pow(1 - p_c, serving_UE_num + 1);
+    double p_s = ((serving_UE_num + 1) * p_c * pow(1 - p_c, serving_UE_num)) / (p_t);
+    double p_d = (serving_UE_num - 1) / (2 * serving_UE_num * p_s);
+
+    double denominator = (1 - p_t) * slot_time;
+    denominator += p_t * p_s * (1 - p_d) * t_s;
+    denominator += p_t * p_s * p_d * t_d;
+    denominator += p_t * (1 - p_s) * t_c;
+
+    return (p_s * p_t * propagation_delay) / (denominator);
 }

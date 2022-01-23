@@ -122,14 +122,7 @@ void printVlcDataRateMatrix(std::vector<std::vector<std::vector<double>>> &VLC_d
             std::cout << "\t";
             for (int k = 0; k < subcarrier_num; k++)
             {
-                //速度 < 1 的太小了 show出來沒意義
-                //視爲 0
-                if (VLC_data_rate_matrix[i][j][k] > 1.0)
-                    std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << VLC_data_rate_matrix[i][j][k] << " ";
-
-                else
-                    std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2) << 0 << " ";
-
+                std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(4) << VLC_data_rate_matrix[i][j][k] << " ";
             }
 
             std::cout << std::endl;

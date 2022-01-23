@@ -62,10 +62,10 @@ std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> 
 
 std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in dB
 
-std::vector<double> RF_data_rate_vector(UE_num+1, 0.0);
-std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0)));
+std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
+std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
 
-std::vector<double> avg_throughput_per_UE(UE_num, 0.0);
+std::vector<double> avg_throughput_per_UE(UE_num, 0.0); // in Mbps
 std::vector<double> avg_satisfaction_per_UE(UE_num, 0.0);
 
 

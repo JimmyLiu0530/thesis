@@ -69,17 +69,17 @@ const double HHO_efficiency = 0.9;
 /*
     RF channel
 */
-const double channel_bit_rate = 1732; // Mbps
 const int max_backoff_stage = 1024;
-const double RTS_time = 0.16; // µs
-const double CTS_time = 0.14; // µs
-const double header_time = 0.23; // µs
-const double ACK_time = 0.14; // µs
+const double channel_bit_rate = 1732; // Mbps
+const double RTS_time = 160.0; // µs
+const double CTS_time = 140.0; // µs
+const double header_time = 230.0; // µs
+const double ACK_time = 140.0; // µs
 const double SIFS_time = 28.0; // µs
 const double PIFS_time = 80.0; // µs
 const double DIFS_time = 128.0; // µs
 const double slot_time = 52.0; // It is not given in benchmark paper. I infer this value by PIFS = SIFS + slot time, which is defined in ieee 802.11.
-const double propagation_delay = 1.0; // µs
+const double propagation_delay = 1000.0; // µs
 const double utilization_ratio = 2.0; // ε
 
 
