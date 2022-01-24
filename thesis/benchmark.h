@@ -20,15 +20,15 @@ void benchmarkDynamicLB(int &state,
                        std::vector<std::vector<int>> &AP_association_matrix,
                        std::vector<MyUeNode> &my_UE_list);
 
-void algorithmForFirstState(std::vector<double> &RF_data_rate_vector,
-                            std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                            std::vector<std::vector<int>> &AP_association_matrix,
-                            std::vector<MyUeNode> &my_UE_list);
-
-void algorithmExceptFirstState(std::vector<double> &RF_data_rate_vector,
+std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
                                 std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                                 std::vector<std::vector<int>> &AP_association_matrix,
                                 std::vector<MyUeNode> &my_UE_list);
+
+std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
+                                        std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                                        std::vector<std::vector<int>> &AP_association_matrix,
+                                        std::vector<MyUeNode> &my_UE_list);
 
 
 std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix);

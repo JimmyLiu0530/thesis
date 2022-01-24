@@ -183,7 +183,7 @@ double getDistance(Ptr<Node> AP, MyUeNode &UE_node) {
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix) {
     for (int i = 0; i < VLC_AP_num; i++) {
 		for (int j = 0; j < UE_num; j++) {
-			for (int k = 0; k < effective_subcarrier_num; k++) {
+			for (int k = 1; k < effective_subcarrier_num+1; k++) {
                 VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, i, j, k);
 			}
 		}
@@ -198,9 +198,8 @@ double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int 
     }
 
     double noise = pow(optical_to_electric_power_ratio, 2) * VLC_AP_bandwidth * noise_power_spectral_density;
-    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference+noise);
+    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference + noise);
 
-    //return SINR;
     // change to logarithmic SINR
     return (SINR == 0) ? 0 : 10*log10(SINR);
 }
@@ -217,7 +216,7 @@ double estimateOneVlcFrontEnd(int subcarrier_index) {
 void calculateAllVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix) {
     for (int i = 0; i < VLC_AP_num; i++) {
 		for (int j = 0; j < UE_num; j++) {
-			for (int k = 0; k < effective_subcarrier_num; k++) {
+			for (int k = 1; k < effective_subcarrier_num+1; k++) {
                 VLC_data_rate_matrix[i][j][k] = estimateOneVlcDataRate(VLC_SINR_matrix, i, j, k);
 			}
 		}
