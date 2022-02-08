@@ -114,8 +114,7 @@ std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
     std::uniform_int_distribution<int> distribution(0, 1);
 
     for (int i = 0; i < UE_num; i++) {
-        int chosen_AP = (strategy_set[i][1] != 1) ? strategy_set[i][1] : 0;
-        //int chosen_AP = strategy_set[i][distribution(generator)];
+        int chosen_AP = strategy_set[i][distribution(generator)];
 
         serving_AP[i] = chosen_AP;
         served_UE[chosen_AP].push_back(i);
@@ -164,12 +163,14 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
 
         for (int j = 0; j < VLC_AP_num; j++) {
             double total_link_data_rate = 0.0;
+            double handover_efficiency = (j != my_UE_list[i].getCurrAssociatedAP()) ? HHO_efficiency : 1;
 
             for (int k = 1; k < effective_subcarrier_num + 1; k++)
                 total_link_data_rate += VLC_data_rate_matrix[j][i][k];
             total_link_data_rate *= time_slot_num;
 
-            if (total_link_data_rate > max_data_rate) {
+
+            if (total_link_data_rate * handover_efficiency > max_data_rate) {
                 max_data_rate = total_link_data_rate;
                 best_VLC_AP = j + RF_AP_num;  // indexed starting from 1 (i.e. the number of RF APs)
             }
@@ -188,6 +189,7 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
     std::vector<int> serving_AP (UE_num, -1);
 
     for (int i = 0; i < UE_num; i++) {
+        std::cout << "UE " << i << ": " << std::endl;
         double last_throughput = my_UE_list[i].getLastThroughput();
         double probability_of_mutation = (last_throughput < avg_payoff) ? (1 - last_throughput/avg_payoff) : 0;
 
@@ -199,6 +201,11 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
         if (random_number < probability_of_mutation) { // mutation occurs
             if (my_UE_list[i].getCurrAssociatedAP() == 0) { // previous AP is RF AP
                 std::vector<int> prev_served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][1]);
+
+                std::cout << "These are UEs served by VLC AP " << strategy_set[i][1]-RF_AP_num << ": " << std::endl;
+                for (int j = 0; j < prev_served_UE.size(); j++)
+                    std::cout << prev_served_UE[j] << " ";
+                std::cout << std::endl;
 
                 prev_served_UE.push_back(i);
                 std::vector<double> estimated_payoff_vec = OFDMA(strategy_set[i][1]-RF_AP_num, prev_served_UE, VLC_data_rate_matrix);
@@ -212,7 +219,7 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
             }
             else { // previous AP is VLC AP
                 std::vector<int> prev_served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][0]);
-                double estimated_payoff = RF_data_rate_vector[prev_served_UE.size()+1];
+                double estimated_payoff = RF_data_rate_vector[prev_served_UE.size()+1] * VHO_efficiency;
 
                 if (estimated_payoff > my_UE_list[i].getLastThroughput())
                     serving_AP[i] = strategy_set[i][0];
@@ -291,20 +298,23 @@ std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vec
         double sum_data_rate = 0.0; // denominator of the first term in (33)
         double aggregate_data_rate_to_data_rate_sum = 0.0; // the second term of the second term in (33)
         for (int i = 0; i < served_UE.size(); i++) {
-            sum_data_rate += pow(VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m], 1/beta - 1);
-
-            if (VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] == 0)
+            if (VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] == 0.0)
                 continue;
 
+            sum_data_rate += pow(VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m], 1/beta - 1);
             aggregate_data_rate_to_data_rate_sum += aggregate_data_rate[i] / VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m];
         }
 
-        for (int i = 0; i < served_UE.size(); i++) {
-            double first_term = pow(VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m], 1/beta - 1) / sum_data_rate;
-            double second_term = time_slot_num + aggregate_data_rate_to_data_rate_sum;
-            double last_term = (VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] != 0) ? aggregate_data_rate[i] / VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] : 0;
+        if (sum_data_rate != 0.0) { // prevent from dividing by zero
+            for (int i = 0; i < served_UE.size(); i++) {
+                if (VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m] != 0.0) {
+                    double first_term = pow(VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m], 1/beta - 1) / sum_data_rate;
+                    double second_term = time_slot_num + aggregate_data_rate_to_data_rate_sum;
+                    double last_term = aggregate_data_rate[i] / VLC_data_rate_matrix[VLC_AP_index][served_UE[i]][m];
 
-            subcarriers[i][m] = first_term * second_term - last_term;
+                    subcarriers[i][m] = first_term * second_term - last_term;
+                }
+            }
         }
 
         m = m - 1;

@@ -34,6 +34,7 @@
 #include <string>
 #include <algorithm>
 #include <iomanip>
+#include <string>
 
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
@@ -56,7 +57,7 @@ NS_LOG_COMPONENT_DEFINE ("TcpLargeTransfer");
 std::vector<double> Received(1, 0.0);
 std::vector<double> theTime(1, 0.0);
 
-std::vector<std::vector<int>> AP_association_matrix(RF_AP_num+VLC_AP_num, std::vector<int> (UE_num+1, 0));
+std::vector<std::vector<int>> AP_association_matrix(RF_AP_num+VLC_AP_num, std::vector<int> (UE_num, 0));
 
 std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> (UE_num, 0.0));
 
@@ -65,8 +66,10 @@ std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::v
 std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
 std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
 
-std::vector<double> avg_throughput_per_UE(UE_num, 0.0); // in Mbps
-std::vector<double> avg_satisfaction_per_UE(UE_num, 0.0);
+std::vector<double> recorded_avg_throughput_per_UE(UE_num, 0.0); // in Mbps
+std::vector<double> recorded_avg_satisfaction_per_UE(UE_num, 0.0);
+
+
 
 
 
@@ -76,7 +79,7 @@ static uint32_t currentTxBytes = 0;
 static const uint32_t writeSize = 1040;
 static int state = 0;
 uint8_t data[writeSize];
-char path[] = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output.csv";
+std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output.csv";
 
 
 void StartFlow(Ptr<Socket>, Ipv4Address, uint16_t);
@@ -128,6 +131,21 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     std::sort(my_UE_list.begin(),my_UE_list.end(),[](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
 
+
+    // use another storage to keep some information of each UE
+    // since somehow get 0 when accessing these information through my_UE_list after Simulator::Run()
+    for(int i = 0; i < my_UE_list.size(); i++) {
+        recorded_avg_throughput_per_UE[i] = my_UE_list[i].getAvgThroughput();
+
+        double avg_satisfaction= 0;
+        std::vector<double> satisfaction_history = my_UE_list[i].getSatisfactionHistory();
+
+        for(int j = 0 ; j < satisfaction_history.size() ; j++)
+            avg_satisfaction += satisfaction_history[j];
+
+        avg_satisfaction /= satisfaction_history.size();
+        recorded_avg_satisfaction_per_UE[i] = avg_satisfaction;
+    }
 
     if(!Simulator::IsFinished())
     Simulator::Schedule(MilliSeconds(time_period), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
@@ -293,10 +311,15 @@ int main(int argc, char *argv[])
      * after simulation, calculate overall throughput, fairness index and satisfaction
     */
 
-    // overall throughput
+    // overall avg. throughput
     double sys_throughput = 0.0;
-    for (int i = 0; i < UE_num; i++)
-        sys_throughput += my_UE_list[i].getAvgThroughput();
+
+    for (int i = 0; i < UE_num; i++) {
+        sys_throughput += recorded_avg_throughput_per_UE[i];
+        //std::cout << "sys_throughput: " << sys_throughput << " ";
+    }
+    sys_throughput /= UE_num;
+
 
     // overall fairness index - Jain's fairness index
     double fairness = 0.0;
@@ -304,23 +327,25 @@ int main(int argc, char *argv[])
     double sum_of_square = 0.0;
 
     for (int i = 0; i < UE_num; i++) {
-        double faction = my_UE_list[i].getAvgThroughput() / my_UE_list[i].getRequiredDataRate();
-
-        square_of_sum += faction;
-        sum_of_square += pow(faction, 2);
+        square_of_sum += recorded_avg_throughput_per_UE[i];
+        sum_of_square += pow(recorded_avg_throughput_per_UE[i], 2);
     }
     square_of_sum = pow(square_of_sum, 2);
-
     fairness = square_of_sum / (UE_num * sum_of_square);
 
-    // overall (avg) satisfaction
+
+    /*// overall (avg) satisfaction
     double avg_satisfaction = 0.0;
 
     for (int i = 0; i < UE_num; i++) {
-        avg_satisfaction += my_UE_list[i].calculateAvgSatisfaction();
+        avg_satisfaction += recorded_avg_satisfaction_per_UE[i];
     }
     avg_satisfaction /= UE_num;
+    */
 
+    std::cout << "overall avg. throughput: " << sys_throughput
+              << ", fairness: " << fairness << std::endl;
+              //<< ", avg. satisfaction: " << avg_satisfaction << std::endl;
 
     /*
      * output the results to .csv files
@@ -331,7 +356,7 @@ int main(int argc, char *argv[])
         std::cout << "Fail to open file\n";
     }
     else {
-        output << sys_throughput << "," << fairness << "," << avg_satisfaction << ",";
+        output << sys_throughput << "," << fairness << ","; //<< "," << avg_satisfaction << ",";
         output << std::endl;
     }
 
