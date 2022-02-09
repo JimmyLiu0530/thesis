@@ -178,7 +178,7 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
         strategy_set[i][1] = best_VLC_AP;
     }
 
-    // step2: to see UE by UE whether it needs to mutate (change to another AP)
+    // step2: check UE by UE whether it needs to mutate (change to another AP)
     double avg_payoff = 0.0;
     for (int i = 0; i < UE_num; i++) {
         avg_payoff += my_UE_list[i].getLastThroughput();
@@ -189,7 +189,6 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
     std::vector<int> serving_AP (UE_num, -1);
 
     for (int i = 0; i < UE_num; i++) {
-        std::cout << "UE " << i << ": " << std::endl;
         double last_throughput = my_UE_list[i].getLastThroughput();
         double probability_of_mutation = (last_throughput < avg_payoff) ? (1 - last_throughput/avg_payoff) : 0;
 
@@ -201,15 +200,9 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
         if (random_number < probability_of_mutation) { // mutation occurs
             if (my_UE_list[i].getCurrAssociatedAP() == 0) { // previous AP is RF AP
                 std::vector<int> prev_served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][1]);
-
-                std::cout << "These are UEs served by VLC AP " << strategy_set[i][1]-RF_AP_num << ": " << std::endl;
-                for (int j = 0; j < prev_served_UE.size(); j++)
-                    std::cout << prev_served_UE[j] << " ";
-                std::cout << std::endl;
-
                 prev_served_UE.push_back(i);
-                std::vector<double> estimated_payoff_vec = OFDMA(strategy_set[i][1]-RF_AP_num, prev_served_UE, VLC_data_rate_matrix);
 
+                std::vector<double> estimated_payoff_vec = OFDMA(strategy_set[i][1]-RF_AP_num, prev_served_UE, VLC_data_rate_matrix);
                 double estimated_payoff = estimated_payoff_vec.back() * VHO_efficiency;
 
                 if (estimated_payoff > my_UE_list[i].getLastThroughput())
@@ -252,7 +245,7 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
 
     // if connected to VLC AP -> OFDMA
     for (int i = RF_AP_num; i < VLC_AP_num + RF_AP_num; i++) {
-        std::vector<double> data_rate = OFDMA(i, served_UE[i], VLC_data_rate_matrix);
+        std::vector<double> data_rate = OFDMA(i-RF_AP_num, served_UE[i], VLC_data_rate_matrix);
 
         for (int j = 0; j < served_UE[i].size(); j++)
             throughput[served_UE[i][j]] = data_rate[j];
@@ -276,7 +269,7 @@ std::vector<int> constructServedUeSet(std::vector<std::vector<int>> &AP_associat
 }
 
 
-std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix)
+std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> &served_UE, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix)
 {
     if (served_UE.empty())
         return {};

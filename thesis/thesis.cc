@@ -71,9 +71,6 @@ std::vector<double> recorded_avg_satisfaction_per_UE(UE_num, 0.0);
 
 
 
-
-
-
 static const uint32_t totalTxBytes = 10000000;
 static uint32_t currentTxBytes = 0;
 static const uint32_t writeSize = 1040;
@@ -114,8 +111,11 @@ void updateToNextState(NodeContainer &RF_AP_node,
                        NodeContainer &UE_nodes,
                        std::vector<MyUeNode> &my_UE_list)
 {
+#if DEBUG_MODE
     std::cout << "updateToNextState(" << state << ")\n";
-#if(PROPOSED_METHOD)
+#endif
+
+#if PROPOSED_METHOD
 
     proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
                        VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
     installRfApMobility(RF_AP_node);
 
 #if DEBUG_MODE
-    printRfApPosition(RF_AP_node);    //for debug use
+    printRfApPosition(RF_AP_node);
 #endif
 
     // create VLC AP nodes
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     installVlcApMobility(VLC_AP_nodes);
 
 #if DEBUG_MODE
-    printVlcApPosition(VLC_AP_nodes);  //for debug use
+    printVlcApPosition(VLC_AP_nodes);
 #endif
 
     // create UE nodes
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
     installUeMobility(UE_nodes);
 
 #if DEBUG_MODE
-    printUePosition(UE_nodes);          //for debug use
+    printUePosition(UE_nodes);
 #endif
 
     std::vector<MyUeNode> my_UE_list = initializeMyUeNodeList(UE_nodes);
@@ -300,8 +300,7 @@ int main(int argc, char *argv[])
 
     Simulator::Schedule(Seconds(0.0), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
 
-    std::cout << "simulation start\n";
-    Simulator::Stop(Seconds(2.0)); // change Minutes to Seconds to check correctness
+    Simulator::Stop(Seconds(25.0)); // 1000 quasi-static states in total
     Simulator::Run();
 
 
@@ -344,7 +343,7 @@ int main(int argc, char *argv[])
     */
 
     std::cout << "overall avg. throughput: " << sys_throughput
-              << ", fairness: " << fairness << std::endl;
+              << " Mbps, fairness: " << fairness << std::endl;
               //<< ", avg. satisfaction: " << avg_satisfaction << std::endl;
 
     /*

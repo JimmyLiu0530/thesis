@@ -19,7 +19,6 @@ using namespace ns3;
 
     Since there is only one RF AP, it is placed at the center of the room
 */
-
 void installRfApMobility(NodeContainer &RF_AP_node) {
     MobilityHelper RF_AP_mobility;
     Ptr<ListPositionAllocator> RF_AP_pos_list = CreateObject<ListPositionAllocator>();
@@ -45,7 +44,6 @@ void installRfApMobility(NodeContainer &RF_AP_node) {
         *(0)    *(1) |   *(2)    *(3)
 
 */
-
 void installVlcApMobility(NodeContainer &VLC_AP_nodes) {
     MobilityHelper VLC_AP_mobility;
     Ptr<ListPositionAllocator> VLC_AP_pos_list = CreateObject<ListPositionAllocator>();
@@ -73,7 +71,6 @@ void installVlcApMobility(NodeContainer &VLC_AP_nodes) {
 /*
     install the mobility of UE - orientation-based RWP
 */
-
 void installUeMobility(NodeContainer &UE_nodes) {
     SeedManager::SetSeed(time(NULL));
 

@@ -31,7 +31,7 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
                                         std::vector<MyUeNode> &my_UE_list);
 
 
-std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> served_UE, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix);
+std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> &served_UE, std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix);
 
 void updateApAssociationResult(std::vector<MyUeNode> &my_UE_list,
                                std::vector<int> &serving_AP,

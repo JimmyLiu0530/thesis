@@ -4,7 +4,7 @@
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
 
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 #define PROPOSED_METHOD 0
 
 const double PI = boost::math::constants::pi<double>();
@@ -12,7 +12,7 @@ const double room_size = 16;
 const int RF_AP_num = 1;
 const int VLC_AP_num = 16;
 const int VLC_AP_per_row = 4;
-const int UE_num = 80;
+const int UE_num = 200;
 const double time_period = 500; // ms
 const double avg_speed = 1.0;
 const double pause_time = 0.0;
@@ -21,7 +21,7 @@ const double pause_time = 0.0;
 /*
     RF AP
 */
-const double RF_AP_height = 3.5;
+const double RF_AP_height = 3.5; // m
 
 
 /*
@@ -29,7 +29,7 @@ const double RF_AP_height = 3.5;
 */
 const double VLC_AP_height = 3.5;
 const int VLC_AP_power = 9;
-const int VLC_AP_bandwidth = 100; // MHz
+const int VLC_AP_bandwidth = 300; // MHz
 const double noise_power_spectral_density = 1e-13;  //N_0 = 1e-19 A/Hz = 1e-13 A/MHz
 const double conversion_efficiency = 0.53; // optical to electrical conversion efficiency
 const double optical_to_electric_power_ratio = 3; // κ
@@ -58,7 +58,7 @@ const double refractive_index = 1.5;
 const double receiver_area = 1e-4; // 1 cm^2 = 0.0001 m^2
 const double reflection_efficiency = 0.75;
 const double fitting_coefficient = 2.88;
-const double three_dB_cutoff = 20; // MHz
+const double three_dB_cutoff = 30; // MHz
 
 /*
     handover
@@ -98,6 +98,6 @@ const double noise_variance = (1.0 - c_1 * c_1) * angle_variance * angle_varianc
 /*
     utility function
 */
-const double beta = 1.0; // fairness coefficient
+const double beta = 100.0; // fairness coefficient
 
 #endif // GLOBAL_CONFIGURATION_H
