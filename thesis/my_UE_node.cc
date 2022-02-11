@@ -24,7 +24,6 @@ MyUeNode::MyUeNode(int node_ID, Vector pos, double required_data_rate)
 
         polar_angle = 0.0;
         azimuth_angle = 0.0;
-        avg_throughput = 0.0;
         prev_associated_AP = -1;
         curr_associated_AP = -1;
         SINR = 0.0;
@@ -50,20 +49,6 @@ double MyUeNode::getRequiredDataRate(void) {
     return required_data_rate;
 }
 
-void MyUeNode::setAvgThroughput(double data_rate_in_Mbps) {
-    avg_throughput = data_rate_in_Mbps;
-}
-
-double MyUeNode::getAvgThroughput(void) {
-    return avg_throughput;
-}
-
-double MyUeNode::getLastThroughput(void) {
-    if (throughput_per_iteration.empty())
-        return 0.0;
-    return throughput_per_iteration[throughput_per_iteration.size()-1];
-}
-
 void MyUeNode::setCurrAssociatedAP(int associated_AP_index) {
     prev_associated_AP = curr_associated_AP;
     curr_associated_AP = associated_AP_index;
@@ -85,37 +70,45 @@ double MyUeNode::getSINR(void) {
     return SINR;
 }
 
-void MyUeNode::addThroughput(double data_rate_in_Mbps) {
-    throughput_per_iteration.push_back(data_rate_in_Mbps);
+void MyUeNode::addThroughput(double new_data_rate) {
+    throughput_per_state.push_back(new_data_rate);
+}
 
-    // update avgerage throughput
-    double sum = 0.0;
-    for (int i = 0; i < throughput_per_iteration.size(); i++)
-        sum += throughput_per_iteration[i];
+double MyUeNode::getLastThroughput(void) {
+    if (throughput_per_state.empty())
+        return 0.0;
 
-    setAvgThroughput(sum / throughput_per_iteration.size());
+    return throughput_per_state.back();
+}
+
+double MyUeNode::calculateAvgThroughput(void) {
+    double throughput_sum = 0.0;
+
+    for (int i = 0; i < throughput_per_state.size(); i++)
+        throughput_sum += throughput_per_state[i];
+
+    return throughput_sum / throughput_per_state.size();
 }
 
 std::vector<double> MyUeNode::getThroughputHistory(void) {
-    return throughput_per_iteration;
+    return throughput_per_state;
 }
 
 void MyUeNode::addSatisfaction(double satis_level) {
-    satisfaction_per_iteration.push_back(satis_level);
-
+    satisfaction_per_state.push_back(satis_level);
 }
 std::vector<double> MyUeNode::getSatisfactionHistory(void) {
-    return satisfaction_per_iteration;
+    return satisfaction_per_state;
 }
 
 double MyUeNode::calculateAvgSatisfaction(void) {
     double satis_sum = 0.0;
 
-    for (int i = 0; i < satisfaction_per_iteration.size(); i++) {
-        satis_sum += satisfaction_per_iteration[i];
+    for (int i = 0; i < satisfaction_per_state.size(); i++) {
+        satis_sum += satisfaction_per_state[i];
     }
 
-    return satis_sum / satisfaction_per_iteration.size();
+    return satis_sum / satisfaction_per_state.size();
 }
 
 void MyUeNode::setPolarAngle(double new_polar_angle) {

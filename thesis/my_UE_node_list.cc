@@ -21,7 +21,7 @@ std::vector<MyUeNode> initializeMyUeNodeList(NodeContainer &UE_nodes)
     // then, instantiate an new myUeNode object and add it into my_UE_list
 
     for (int i = 0; i < UE_num; i++) {
-        double required_data_rate = 0.0;
+        double required_data_rate = 1.0;
 
         Ptr<MobilityModel> UE_mobility_model = (UE_nodes.Get(i))->GetObject<MobilityModel>();
         Vector pos = UE_mobility_model->GetPosition();

@@ -26,10 +26,6 @@ public:
     void setRequiredDataRate(double data_rate_in_Mbps);
     double getRequiredDataRate(void);
 
-    void setAvgThroughput(double data_rate_in_Mbps);
-    double getAvgThroughput(void);
-    double getLastThroughput(void);
-
     void setCurrAssociatedAP(int associated_AP_index);
     int getCurrAssociatedAP(void);
 
@@ -38,7 +34,9 @@ public:
     void setSINR(double in_SINR);
     double getSINR(void);
 
-    void addThroughput(double data_rate_in_Mbps);
+    void addThroughput(double new_data_rate);
+    double getLastThroughput(void);
+    double calculateAvgThroughput(void);
     std::vector<double> getThroughputHistory(void);
 
     void addSatisfaction(double satis_level);
@@ -53,7 +51,6 @@ private:
     int node_ID;
     Vector pos;
     double required_data_rate;
-    double avg_throughput;
     double polar_angle; // theta
     double azimuth_angle; // little omega
     std::default_random_engine generator;
@@ -63,11 +60,12 @@ private:
     int prev_associated_AP;
     int curr_associated_AP;
     double SINR;
-    std::vector<double> throughput_per_iteration;
-    std::vector<double> satisfaction_per_iteration;
+    std::vector<double> throughput_per_state;
+    std::vector<double> satisfaction_per_state;
 
     void setPolarAngle(double new_polar_angle); // in rad
     void setAzimuthAngle(double new_azimuth_angle); // in rad
+    void setAvgThroughput(double data_rate_in_Mbps);
 };
 
 #endif // MY_UE_NODE_H

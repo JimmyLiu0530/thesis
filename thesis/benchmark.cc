@@ -15,7 +15,7 @@
 #include "ns3/mobility-module.h"
 
 
-void benchmarkDynamicLB(int &state,
+double benchmarkDynamicLB(int &state,
                        NodeContainer &RF_AP_node,
                        NodeContainer &VLC_AP_nodes,
                        NodeContainer &UE_nodes,
@@ -29,11 +29,14 @@ void benchmarkDynamicLB(int &state,
     precalculation(RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix, VLC_SINR_matrix,
                    RF_data_rate_vector, VLC_data_rate_matrix, my_UE_list);
 
+    std::vector<std::vector<int>> local_AP_association_matrix = AP_association_matrix;
+    std::vector<std::vector<double>> throughtput_per_iteration (UE_num, std::vector<double> ());
+
 
     std::vector<int> prev_serving_AP = initializeStep(RF_data_rate_vector,
                                                        VLC_data_rate_matrix,
-                                                       AP_association_matrix,
-                                                       my_UE_list);
+                                                       local_AP_association_matrix,
+                                                       throughtput_per_iteration);
 
     int next_iteration_flag = 0;
     int iteration_cnt = 1;
@@ -43,8 +46,8 @@ void benchmarkDynamicLB(int &state,
         next_iteration_flag = 0;
         std::vector<int> new_serving_AP = EGT_basedLoadBalance(RF_data_rate_vector,
                                                                VLC_data_rate_matrix,
-                                                               AP_association_matrix,
-                                                               my_UE_list);
+                                                               local_AP_association_matrix,
+                                                               throughtput_per_iteration);
 
         // check if no AP switch occurs
         for (int i = 0; i < UE_num; i++) {
@@ -57,12 +60,33 @@ void benchmarkDynamicLB(int &state,
         }
     } while (next_iteration_flag);
 
+    /*
+        After convergence, update AP_association_matrix and UE nodes with APA and RA results.
+        In addition, calculate fairness in this state and return it
+    */
+    updateApAssociationResult(local_AP_association_matrix, AP_association_matrix, my_UE_list);
+    updateResourceAllocationResult(throughtput_per_iteration, my_UE_list);
+
+
+    double fairness_index = 0.0;
+    double square_of_sum = 0.0;
+    double sum_of_square = 0.0;
+
+    for (int i = 0; i < UE_num; i++) {
+        double throughput = my_UE_list[i].getLastThroughput();
+
+        square_of_sum += throughput;
+        sum_of_square += pow(throughput, 2);
+    }
+
+    square_of_sum = pow(square_of_sum, 2);
+    fairness_index = square_of_sum / (UE_num * sum_of_square);
 
 #if DEBUG_MODE
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
 
     for (int i = 0; i < my_UE_list.size(); i++) {
-        std::cout << "History data rate of UE id: " << my_UE_list[i].getID() << std::endl;
+        std::cout << "History (per state) data rate of UE id: " << my_UE_list[i].getID() << std::endl;
         std::vector<double> history = my_UE_list[i].getThroughputHistory();
 
         for (int j = 0; j < history.size(); j++)
@@ -72,13 +96,13 @@ void benchmarkDynamicLB(int &state,
     std::cout<<std::endl;
 #endif // DEBUG_MODE
 
-    state++;
+    return fairness_index;
 }
 
 std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
                                 std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                                std::vector<std::vector<int>> &AP_association_matrix,
-                                std::vector<MyUeNode> &my_UE_list)
+                                std::vector<std::vector<int>> &local_AP_association_matrix,
+                                std::vector<std::vector<double>> &throughtput_per_iteration)
 {
     // step1: construct strategy sets of the form {RF_AP, best VLC_AP} for all UEs
     std::vector<std::vector<int>> strategy_set (UE_num, std::vector<int> (2, -1)); // {{RF_AP_idx, best VLC_AP_idx}, {RF_AP_idx, best VLC_AP_idx}, ...}
@@ -106,30 +130,32 @@ std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
     }
 
     // step2: UE are randomly allocated to an AP from their strategy set (APA)
-    std::vector<int> serving_AP (UE_num, -1);
+    std::vector<int> serving_AP (UE_num, -1); // for output
     std::vector<std::vector<int>> served_UE (RF_AP_num + VLC_AP_num, std::vector<int> ()); // record the UEs served by a AP
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator (seed);
     std::uniform_int_distribution<int> distribution(0, 1);
 
+    // clear the local_AP_association_matrix
+    for (int i = 0; i < local_AP_association_matrix.size(); i++)
+        for (int j = 0; j < local_AP_association_matrix[0].size(); j++)
+            local_AP_association_matrix[i][j] = 0;
+
     for (int i = 0; i < UE_num; i++) {
         int chosen_AP = strategy_set[i][distribution(generator)];
 
+        local_AP_association_matrix[chosen_AP][i] = 1;
         serving_AP[i] = chosen_AP;
         served_UE[chosen_AP].push_back(i);
     }
 
-    updateApAssociationResult(my_UE_list, serving_AP, AP_association_matrix);
-
 
     //step3: resource allocation
-    std::vector<double> throughput (UE_num, 0.0);
-
     // if connected to RF AP -> equally divide RF AP resource
     for (int i = 0; i < RF_AP_num; i++) {
         for (int j = 0; j < served_UE[i].size(); j++) {
-            throughput[served_UE[i][j]] = RF_data_rate_vector[served_UE[i].size()];
+            throughtput_per_iteration[served_UE[i][j]].push_back(RF_data_rate_vector[served_UE[i].size()]);
         }
     }
 
@@ -138,10 +164,8 @@ std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
         std::vector<double> data_rate = OFDMA(i-RF_AP_num, served_UE[i], VLC_data_rate_matrix);
 
         for (int j = 0; j < served_UE[i].size(); j++)
-            throughput[served_UE[i][j]] = data_rate[j];
+            throughtput_per_iteration[served_UE[i][j]].push_back(data_rate[j]);
     }
-
-    updateResourceAllocation(my_UE_list, throughput);
 
     return serving_AP;
 }
@@ -149,9 +173,22 @@ std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
 
 std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
                                         std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                                        std::vector<std::vector<int>> &AP_association_matrix,
-                                        std::vector<MyUeNode> &my_UE_list)
+                                        std::vector<std::vector<int>> &local_AP_association_matrix,
+                                        std::vector<std::vector<double>> &throughtput_per_iteration)
 {
+    // pre-step: construct serving AP and served UE of the previous iteration
+    std::vector<int> old_serving_AP (UE_num, -1);
+    std::vector<std::vector<int>> old_served_UE (RF_AP_num + VLC_AP_num, std::vector<int> ());
+
+    for (int i = 0; i < local_AP_association_matrix.size(); i++) {
+        for (int j = 0; j < local_AP_association_matrix[0].size(); j++) {
+            if (local_AP_association_matrix[i][j] == 1) {
+                old_serving_AP[j] = i;
+                old_served_UE[i].push_back(j);
+            }
+        }
+    }
+
     // step1: construct strategy sets of the form {RF_AP, best VLC_AP} for all UE
     std::vector<std::vector<int>> strategy_set (UE_num, std::vector<int> (2, -1));
 
@@ -163,7 +200,7 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
 
         for (int j = 0; j < VLC_AP_num; j++) {
             double total_link_data_rate = 0.0;
-            double handover_efficiency = (j != my_UE_list[i].getCurrAssociatedAP()) ? HHO_efficiency : 1;
+            double handover_efficiency = (j != old_serving_AP[i]) ? HHO_efficiency : 1;
 
             for (int k = 1; k < effective_subcarrier_num + 1; k++)
                 total_link_data_rate += VLC_data_rate_matrix[j][i][k];
@@ -181,91 +218,84 @@ std::vector<int> EGT_basedLoadBalance(std::vector<double> &RF_data_rate_vector,
     // step2: check UE by UE whether it needs to mutate (change to another AP)
     double avg_payoff = 0.0;
     for (int i = 0; i < UE_num; i++) {
-        avg_payoff += my_UE_list[i].getLastThroughput();
+        avg_payoff += throughtput_per_iteration[i].back();
     }
     avg_payoff = avg_payoff / UE_num;
 
 
-    std::vector<int> serving_AP (UE_num, -1);
+    std::vector<int> new_serving_AP (UE_num, -1);
+
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator (seed);
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
 
     for (int i = 0; i < UE_num; i++) {
-        double last_throughput = my_UE_list[i].getLastThroughput();
+        double last_throughput = throughtput_per_iteration[i].back();
         double probability_of_mutation = (last_throughput < avg_payoff) ? (1 - last_throughput/avg_payoff) : 0;
-
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::default_random_engine generator (seed);
-        std::uniform_real_distribution<double> distribution(0.0, 1.0);
         double random_number = distribution(generator);
 
         if (random_number < probability_of_mutation) { // mutation occurs
-            if (my_UE_list[i].getCurrAssociatedAP() == 0) { // previous AP is RF AP
-                std::vector<int> prev_served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][1]);
+            if (old_serving_AP[i] == 0) { // previous AP is RF AP
+                std::vector<int> prev_served_UE = old_served_UE[strategy_set[i][1]];
                 prev_served_UE.push_back(i);
 
                 std::vector<double> estimated_payoff_vec = OFDMA(strategy_set[i][1]-RF_AP_num, prev_served_UE, VLC_data_rate_matrix);
                 double estimated_payoff = estimated_payoff_vec.back() * VHO_efficiency;
 
-                if (estimated_payoff > my_UE_list[i].getLastThroughput())
-                    serving_AP[i] = strategy_set[i][1];
+                if (estimated_payoff > last_throughput)
+                    new_serving_AP[i] = strategy_set[i][1];
                 else
-                    serving_AP[i] = my_UE_list[i].getCurrAssociatedAP();
+                    new_serving_AP[i] = old_serving_AP[i];
             }
             else { // previous AP is VLC AP
-                std::vector<int> prev_served_UE = constructServedUeSet(AP_association_matrix, strategy_set[i][0]);
+                std::vector<int> prev_served_UE = old_served_UE[strategy_set[i][0]];
                 double estimated_payoff = RF_data_rate_vector[prev_served_UE.size()+1] * VHO_efficiency;
 
-                if (estimated_payoff > my_UE_list[i].getLastThroughput())
-                    serving_AP[i] = strategy_set[i][0];
+                if (estimated_payoff > last_throughput)
+                    new_serving_AP[i] = strategy_set[i][0];
                 else
-                    serving_AP[i] = my_UE_list[i].getCurrAssociatedAP();
+                    new_serving_AP[i] = old_serving_AP[i];
             }
         }
         else { // no mutation occurs
-            serving_AP[i] = my_UE_list[i].getCurrAssociatedAP();
+            new_serving_AP[i] = old_serving_AP[i];
         }
     }
 
-    updateApAssociationResult(my_UE_list, serving_AP, AP_association_matrix);
+    // clear the local_AP_association_matrix
+    for (int i = 0; i < local_AP_association_matrix.size(); i++)
+        for (int j = 0; j < local_AP_association_matrix[0].size(); j++)
+            local_AP_association_matrix[i][j] = 0;
+
+    // update the new local_AP_association_matrix
+    for (int i = 0; i < new_serving_AP.size(); i++)
+        local_AP_association_matrix[new_serving_AP[i]][i] = 1;
+
 
 
     // step3: Resource allocation
-    std::vector<double> throughput (UE_num, 0.0);
-    std::vector<std::vector<int>> served_UE (RF_AP_num + VLC_AP_num, std::vector<int> ());
+    std::vector<std::vector<int>> new_served_UE (RF_AP_num + VLC_AP_num, std::vector<int> ());
 
     for (int i = 0; i < RF_AP_num + VLC_AP_num; i++)
-        served_UE[i] = constructServedUeSet(AP_association_matrix, i);
+        new_served_UE[i] = constructServedUeSet(local_AP_association_matrix, i);
 
 
     // if connected to RF AP -> equally divide RF AP resource
     for (int i = 0; i < RF_AP_num; i++) {
-        for (int j = 0; j < served_UE[i].size(); j++) {
-            throughput[served_UE[i][j]] = RF_data_rate_vector[served_UE[i].size()];
+        for (int j = 0; j < new_served_UE[i].size(); j++) {
+            throughtput_per_iteration[new_served_UE[i][j]].push_back(RF_data_rate_vector[new_served_UE[i].size()]);
         }
     }
 
     // if connected to VLC AP -> OFDMA
     for (int i = RF_AP_num; i < VLC_AP_num + RF_AP_num; i++) {
-        std::vector<double> data_rate = OFDMA(i-RF_AP_num, served_UE[i], VLC_data_rate_matrix);
+        std::vector<double> data_rate = OFDMA(i-RF_AP_num, new_served_UE[i], VLC_data_rate_matrix);
 
-        for (int j = 0; j < served_UE[i].size(); j++)
-            throughput[served_UE[i][j]] = data_rate[j];
+        for (int j = 0; j < new_served_UE[i].size(); j++)
+            throughtput_per_iteration[new_served_UE[i][j]].push_back(data_rate[j]);
     }
 
-    updateResourceAllocation(my_UE_list, throughput);
-
-    return serving_AP;
-}
-
-std::vector<int> constructServedUeSet(std::vector<std::vector<int>> &AP_association_matrix, int AP_index)
-{
-    std::vector<int> result;
-
-    for (int i = 0; i < UE_num; i++) {
-        if (AP_association_matrix[AP_index][i] == 1)
-            result.push_back(i);
-    }
-
-    return result;
+    return new_serving_AP;
 }
 
 
@@ -321,38 +351,43 @@ std::vector<double> OFDMA(int VLC_AP_index, std::vector<int> &served_UE, std::ve
     return output_data_rate;
 }
 
-
-void updateApAssociationResult(std::vector<MyUeNode> &my_UE_list,
-                               std::vector<int> &serving_AP,
-                               std::vector<std::vector<int>> &AP_sssociation_matrix)
+std::vector<int> constructServedUeSet(std::vector<std::vector<int>> &local_AP_association_matrix, int AP_index)
 {
-    // update every myUeNode
-    for (int i = 0; i < UE_num; i++)
-        my_UE_list[i].setCurrAssociatedAP(serving_AP[i]);
+    std::vector<int> result;
+    for (int i = 0; i < local_AP_association_matrix[AP_index].size(); i++)
+        if (local_AP_association_matrix[AP_index][i] == 1)
+            result.push_back(i);
 
-    // update the AP association matrix
-    // clear
-    for (int i = 0; i < AP_sssociation_matrix.size(); i++)
-        for (int j = 0; j < AP_sssociation_matrix[0].size(); j++)
-            AP_sssociation_matrix[i][j] = 0;
-    // assign
-    for (int i = 0; i < UE_num; i++)
-        AP_sssociation_matrix[my_UE_list[i].getCurrAssociatedAP()][i] = 1;
-
+    return result;
 }
 
 
-void updateResourceAllocation(std::vector<MyUeNode> &my_UE_list, std::vector<double> &throughput)
+void updateApAssociationResult(std::vector<std::vector<int>> &local_AP_sssociation_matrix,
+                               std::vector<std::vector<int>> &AP_sssociation_matrix,
+                               std::vector<MyUeNode> &my_UE_list)
+{
+    AP_sssociation_matrix = local_AP_sssociation_matrix;
+
+    // update every myUeNode
+    for (int i = 0; i < local_AP_sssociation_matrix.size(); i++) {
+        for (int j = 0; j < local_AP_sssociation_matrix[0].size(); j++) {
+            if (local_AP_sssociation_matrix[i][j] == 1)
+                my_UE_list[j].setCurrAssociatedAP(i);
+        }
+    }
+}
+
+
+void updateResourceAllocationResult(std::vector<std::vector<double>> &throughtput_per_iteration, std::vector<MyUeNode> &my_UE_list)
 {
     for (int i = 0; i < my_UE_list.size(); i++) {
-        my_UE_list[i].addThroughput(throughput[i]);
+        double curr_throughput = throughtput_per_iteration[i].back();
+        double curr_satisfaction = curr_throughput / my_UE_list[i].getRequiredDataRate();
 
-        // update satisfaction
-        double curr_satisfaction = throughput[i] / my_UE_list[i].getRequiredDataRate();
+        if (curr_satisfaction > 1.0)
+            curr_satisfaction = 1.0;
 
-        if (curr_satisfaction > 1)
-            curr_satisfaction = 1;
-
+        my_UE_list[i].addThroughput(curr_throughput);
         my_UE_list[i].addSatisfaction(curr_satisfaction);
     }
 }

@@ -13,9 +13,10 @@ const int RF_AP_num = 1;
 const int VLC_AP_num = 16;
 const int VLC_AP_per_row = 4;
 const int UE_num = 200;
-const double time_period = 500; // ms
+const double time_period = 0.5; // s
 const double avg_speed = 1.0;
 const double pause_time = 0.0;
+const int state_num = 1000;
 
 
 /*
@@ -98,6 +99,6 @@ const double noise_variance = (1.0 - c_1 * c_1) * angle_variance * angle_varianc
 /*
     utility function
 */
-const double beta = 100.0; // fairness coefficient
+const double beta = 1.0; // fairness coefficient
 
 #endif // GLOBAL_CONFIGURATION_H
