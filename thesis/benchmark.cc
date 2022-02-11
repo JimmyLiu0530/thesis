@@ -33,7 +33,7 @@ double benchmarkDynamicLB(int &state,
     std::vector<std::vector<double>> throughtput_per_iteration (UE_num, std::vector<double> ());
 
 
-    std::vector<int> prev_serving_AP = initializeStep(RF_data_rate_vector,
+    std::vector<int> prev_serving_AP = initializedStep(RF_data_rate_vector,
                                                        VLC_data_rate_matrix,
                                                        local_AP_association_matrix,
                                                        throughtput_per_iteration);
@@ -99,7 +99,7 @@ double benchmarkDynamicLB(int &state,
     return fairness_index;
 }
 
-std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
+std::vector<int> initializedStep(std::vector<double> &RF_data_rate_vector,
                                 std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                                 std::vector<std::vector<int>> &local_AP_association_matrix,
                                 std::vector<std::vector<double>> &throughtput_per_iteration)

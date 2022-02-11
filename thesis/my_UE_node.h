@@ -51,8 +51,8 @@ private:
     int node_ID;
     Vector pos;
     double required_data_rate;
-    double polar_angle; // theta
-    double azimuth_angle; // little omega
+    double polar_angle; // θ in rad
+    double azimuth_angle; // ω in rad
     std::default_random_engine generator;
     std::normal_distribution<double> distribution;
 
@@ -63,9 +63,8 @@ private:
     std::vector<double> throughput_per_state;
     std::vector<double> satisfaction_per_state;
 
-    void setPolarAngle(double new_polar_angle); // in rad
-    void setAzimuthAngle(double new_azimuth_angle); // in rad
-    void setAvgThroughput(double data_rate_in_Mbps);
+    void setPolarAngle(double new_polar_angle);
+    void setAzimuthAngle(double new_azimuth_angle);
 };
 
 #endif // MY_UE_NODE_H

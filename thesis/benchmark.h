@@ -20,7 +20,7 @@ double benchmarkDynamicLB(int &state,
                        std::vector<std::vector<int>> &AP_association_matrix,
                        std::vector<MyUeNode> &my_UE_list);
 
-std::vector<int> initializeStep(std::vector<double> &RF_data_rate_vector,
+std::vector<int> initializedStep(std::vector<double> &RF_data_rate_vector,
                                 std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                                 std::vector<std::vector<int>> &local_AP_association_matrix,
                                 std::vector<std::vector<double>> &throughtput_per_iteration);

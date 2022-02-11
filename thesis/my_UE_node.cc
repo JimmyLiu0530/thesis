@@ -129,7 +129,7 @@ double MyUeNode::getAzimuthAngle(void) {
 }
 
 // θ[k] = c_0 + c_1*θ[k-1] + w[k] based on (22)
-// ω = Ω - π, where Ω is movement direction of users
+// ω = Ω - π, where Ω is the angle between movement direction of a user and x-axis (East)
 void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
     double new_polar_angle = c_0 + c_1 * polar_angle + distribution(generator); // in degree
     setPolarAngle(new_polar_angle / 180 * PI);
@@ -137,6 +137,21 @@ void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
     Ptr<MobilityModel> UE_mobility_model = UE->GetObject<MobilityModel>();
     Vector UE_velocity = UE_mobility_model->GetVelocity();
 
+
+    if (UE_velocity.x == 0 && UE_velocity.y == 0) // UE is not moving
+        setAzimuthAngle(-1*PI);
+    else {
+        double big_omega = acos(UE_velocity.x / sqrt(UE_velocity.x * UE_velocity.x + UE_velocity.y * UE_velocity.y));
+
+        // since 0 <= Ω < 2π, however the codomain of acos is only [0,π]
+        // so, for those angles originally in 3rd or 4th quadrant we have to recover them
+        if (UE_velocity.y < 0.0)
+            big_omega = 2 * PI - big_omega;
+
+        setAzimuthAngle(big_omega-PI);
+    }
+
+    /*
     if (UE_velocity.x == 0 && UE_velocity.y == 0)
         setAzimuthAngle(-1*PI);
     else if (UE_velocity.x == 0)
@@ -144,7 +159,7 @@ void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
     else {
         double big_omega = atan(UE_velocity.y / UE_velocity.x); // in rad
         setAzimuthAngle(big_omega-PI);
-    }
+    }*/
 }
 
 
