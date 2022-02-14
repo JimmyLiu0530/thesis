@@ -48,14 +48,14 @@ void installVlcApMobility(NodeContainer &VLC_AP_nodes) {
     MobilityHelper VLC_AP_mobility;
     Ptr<ListPositionAllocator> VLC_AP_pos_list = CreateObject<ListPositionAllocator>();
 
-    double delta = room_size / (VLC_AP_per_row + 1);
+    double delta = room_size / VLC_AP_per_row;
     for (int i = 0; i < VLC_AP_num; i++) {
-        double x = (i%4 + 1) * delta;
-        double y = (i/4 + 1) * delta;
+        double x = (i%VLC_AP_per_row + 1) * delta;
+        double y = (i/VLC_AP_per_row + 1) * delta;
 
         // change origin from left-down to the center
-        x -= room_size / 2;
-        y -= room_size / 2;
+        x -= room_size / 2 + 2;
+        y -= room_size / 2 + 2;
 
         VLC_AP_pos_list->Add(Vector(x, y, VLC_AP_height));
     }
