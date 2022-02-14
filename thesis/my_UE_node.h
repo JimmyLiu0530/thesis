@@ -41,6 +41,7 @@ public:
 
     void addSatisfaction(double satis_level);
     std::vector<double> getSatisfactionHistory(void);
+    double getLastSatisfaction(void);
     double calculateAvgSatisfaction(void);
 
     double getPolarAngle(void);

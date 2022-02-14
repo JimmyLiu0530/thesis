@@ -45,7 +45,7 @@ double getDistance(Ptr<Node> AP, MyUeNode &UE_node); // in meters
     VLC SINR
 */
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix);
-double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index);
+double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<double> &front_end_vector, int VLC_AP_index, int UE_index, int subcarrier_index);
 double estimateOneVlcFrontEnd(int subcarrier_index);
 
 

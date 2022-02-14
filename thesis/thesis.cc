@@ -66,9 +66,11 @@ std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::v
 std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
 std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
 
-std::vector<double> recorded_avg_throughput_per_UE(UE_num, 0.0); // in Mbps
-std::vector<double> recorded_avg_satisfaction_per_UE(UE_num, 0.0);
-std::vector<double> recorded_fairness_index; // fairness index of all states
+std::vector<double> recorded_avg_throughput_per_state(state_num, 0.0); // in Mbps
+std::vector<double> recorded_avg_satisfaction_per_state(state_num, 0.0);
+std::vector<double> recorded_fairness_index_per_state(state_num, 0.0); // fairness index of all states
+
+//std::vector<int> RF_cnt;
 
 
 
@@ -116,6 +118,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
     std::cout << "updateToNextState(" << state << ")\n";
 #endif
 
+
     double fairness_index = 0.0;
 #if PROPOSED_METHOD
 
@@ -131,20 +134,46 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
 #endif
 
-    state++;
-    recorded_fairness_index.push_back(fairness_index);
 
-    std::sort(my_UE_list.begin(),my_UE_list.end(),[](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
+    std::sort(my_UE_list.begin(), my_UE_list.end(), [](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
 
+    /*
+    // calculate the number of UE connected to the RF AP
+    int cnt = 0;
+    for (int i = 0; i < AP_association_matrix[0].size(); i++)
+        if (AP_association_matrix[0][i] == 1)
+            cnt++;
+
+    RF_cnt.push_back(cnt);*/
 
     // use another storage to keep some information of each UE
     // since somehow get 0 when accessing these information through my_UE_list after Simulator::Run()
+    double avg_data_rate = 0.0;
+    double avg_satisfaction = 0.0;
+
+    for (int i = 0; i < my_UE_list.size(); i++) {
+        avg_data_rate += my_UE_list[i].getLastThroughput();
+        avg_satisfaction += my_UE_list[i].getLastSatisfaction();
+    }
+    avg_data_rate = avg_data_rate / UE_num;
+    avg_satisfaction = avg_satisfaction / UE_num;
+
+    std::cout << "avg data rate of state " << state << ": " << avg_data_rate << std::endl;
+    std::cout << "fairness of state " << state << ": " << fairness_index << std::endl;
+
+    recorded_avg_throughput_per_state[state] = avg_data_rate;
+    recorded_avg_satisfaction_per_state[state] = avg_satisfaction;
+    recorded_fairness_index_per_state[state] = fairness_index;
+
+/*
     if (state == state_num) {
         for(int i = 0; i < my_UE_list.size(); i++) {
             recorded_avg_throughput_per_UE[i] = my_UE_list[i].calculateAvgThroughput();
             recorded_avg_satisfaction_per_UE[i] = my_UE_list[i].calculateAvgSatisfaction();
         }
     }
+*/
+    state++;
 
     if (!Simulator::IsFinished())
         Simulator::Schedule(Seconds(time_period), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
@@ -206,7 +235,7 @@ int main(int argc, char *argv[])
     std::vector<MyUeNode> my_UE_list = initializeMyUeNodeList(UE_nodes);
 
 #if DEBUG_MODE
-    printMyUeList(my_UE_list);
+    // printMyUeList(my_UE_list);
 #endif
 
     /** add ip/tcp stack to all nodes.**/
@@ -310,27 +339,39 @@ int main(int argc, char *argv[])
     */
 
     // overall avg. throughput
-    double sys_throughput = 0.0;
+    double avg_throughput = 0.0;
 
-    for (int i = 0; i < UE_num; i++) {
-        sys_throughput += recorded_avg_throughput_per_UE[i];
-        //std::cout << "sys_throughput: " << sys_throughput << " ";
+    for (int i = 0; i < state_num; i++) {
+        avg_throughput += recorded_avg_throughput_per_state[i];
+        //std::cout << "avg. throughput: " << avg_throughput << " ";
     }
-    sys_throughput /= UE_num;
+    avg_throughput = avg_throughput / state_num;
 
 
     // average fairness index over all states - Jain's fairness index
     double avg_fairness = 0.0;
 
-    for (int i = 0; i < recorded_fairness_index.size(); i++)
-        avg_fairness += recorded_fairness_index[i];
+    for (int i = 0; i < state_num; i++)
+        avg_fairness += recorded_fairness_index_per_state[i];
 
-    avg_fairness /= recorded_fairness_index.size();
+    avg_fairness = avg_fairness / state_num;
 
 
-    std::cout << "Avg. throughput: " << sys_throughput
-              << " Mbps, fairness: " << avg_fairness << std::endl;
+    /*
+    // average percentage of WiFi connections
+    double avg_RF_connection_ratio = 0.0;
+    for (int i = 0; i < RF_cnt.size(); i++)
+        avg_RF_connection_ratio += ((double)RF_cnt[i] / UE_num);
+
+    avg_RF_connection_ratio /= RF_cnt.size();
+    */
+
+    std::cout << "Avg. throughput of this experiment: " << avg_throughput << " Mbps" << std::endl;
+    std::cout << "Fairness of this experiment: " << avg_fairness << std::endl;
+              //<< ", RF connection percentage: " << avg_RF_connection_ratio*100 << "%" << std::endl;
               //<< ", avg. satisfaction: " << avg_satisfaction << std::endl;
+
+
 
 
     /*
@@ -342,7 +383,7 @@ int main(int argc, char *argv[])
         std::cout << "Fail to open file\n";
     }
     else {
-        output << sys_throughput << "," << avg_fairness << ","; //<< "," << avg_satisfaction << ",";
+        output << avg_throughput << "," << avg_fairness << ",";// << avg_RF_connection_ratio << ","; << "," << avg_satisfaction << ",";
         output << std::endl;
     }
 

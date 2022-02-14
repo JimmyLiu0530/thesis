@@ -101,6 +101,13 @@ std::vector<double> MyUeNode::getSatisfactionHistory(void) {
     return satisfaction_per_state;
 }
 
+double MyUeNode::getLastSatisfaction(void) {
+    if (satisfaction_per_state.empty())
+        return 0.0;
+
+    return satisfaction_per_state.back();
+}
+
 double MyUeNode::calculateAvgSatisfaction(void) {
     double satis_sum = 0.0;
 

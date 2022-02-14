@@ -13,7 +13,7 @@
 
 static int counter = 0;
 static const double lambertian_coefficient = (-1) / (log2(cos(degree2Radian(PHI_half)))); // m
-static const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view/2)), 2);
+static const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view / 2)), 2);
 
 
 /*
@@ -21,9 +21,9 @@ static const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degre
 
     bit/s/Hz = 1 Mbit/s/MHz
 */
-const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {0.0, 0}, {1.0, 0.877}, {3.0, 1.1758}, {5.0, 1.4766},
-                                                                                     {8.0, 1.9141}, {9.0, 2.4063}, {11.0, 2.7305}, {12.0, 3.3223},
-                                                                                     {14.0, 3.9023}, {16.0, 4.5234}, {18.0, 5.1152}, {20.0, 5.5547} };
+static const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {0.0, 0}, {1.0, 0.877}, {3.0, 1.1758}, {5.0, 1.4766},
+                                                                                             {8.0, 1.9141}, {9.0, 2.4063}, {11.0, 2.7305}, {12.0, 3.3223},
+                                                                                             {14.0, 3.9023}, {16.0, 4.5234}, {18.0, 5.1152}, {20.0, 5.5547} };
 
 
 void precalculation(NodeContainer  &RF_AP_node,
@@ -97,7 +97,7 @@ double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_n
     return line_of_sight;
 }
 
-// cosψ = 1/d((x_a-x_u)sinθcosω+(y_a-y_u)sinθsinω+(z_a-z_u)cosθ)
+// cosψ = 1/d((x_a-x_u)sinθcosω+(y_a-y_u)sinθsinω+(z_a-z_u)cosθ) based on (3)
 double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
     double polar_angle = UE_node.getPolarAngle();
     double azimuth_angle = UE_node.getAzimuthAngle();
@@ -147,8 +147,8 @@ double getIrradianceAngle(Ptr<Node> AP, MyUeNode &UE_node) {
     double dx = AP_pos.x - UE_pos.x;
     double dy = AP_pos.y - UE_pos.y;
 
-    const double plane_dist = sqrt(dx*dx + dy*dy);
-    const double height_diff = AP_pos.z - UE_pos.z;
+    double plane_dist = sqrt(dx*dx + dy*dy);
+    double height_diff = AP_pos.z - UE_pos.z;
 
     return atan(plane_dist / height_diff);
 }
@@ -180,31 +180,36 @@ double getDistance(Ptr<Node> AP, MyUeNode &UE_node) {
     VLC SINR
 */
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix) {
+    // pre-calculate front-end of all effective subcarriers
+    std::vector<double> front_end_vector(effective_subcarrier_num+1, 0.0);
+    for (int i = 1; i < effective_subcarrier_num+1; i++)
+        front_end_vector[i] = estimateOneVlcFrontEnd(i);
+
     for (int i = 0; i < VLC_AP_num; i++) {
 		for (int j = 0; j < UE_num; j++) {
 			for (int k = 1; k < effective_subcarrier_num+1; k++) {
-                VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, i, j, k);
+                VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, front_end_vector, i, j, k);
 			}
 		}
 	}
 }
 
-double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
+double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<double> &front_end_vector, int VLC_AP_index, int UE_index, int subcarrier_index) {
     double interference = 0;
     for (int i = 0; i < VLC_AP_num; i++) {
         if (i != VLC_AP_index)
-            interference += pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[i][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2);
+            interference += pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[i][UE_index] * front_end_vector[subcarrier_index], 2);
     }
 
     double noise = pow(optical_to_electric_power_ratio, 2) * VLC_AP_bandwidth * noise_power_spectral_density;
-    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * estimateOneVlcFrontEnd(subcarrier_index), 2) / (interference + noise);
+    double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * front_end_vector[subcarrier_index], 2) / (interference + noise);
 
     // change to logarithmic SINR
-    return (SINR == 0) ? 0 : 10*log10(SINR);
+    return (SINR == 0) ? 0.0 : 10*log10(SINR);
 }
 
 // front-end
-// H_F(k) = exp( -(k * modulation_bandwidth) / (subcarrier_num*fitting_coefficient*3dB_cutoff))
+// H_F(k) = exp( -(k * modulation_bandwidth) / (subcarrier_num * fitting_coefficient * 3dB_cutoff)) based on revised (4)
 double estimateOneVlcFrontEnd(int subcarrier_index) {
     return exp((-1) * subcarrier_index * VLC_AP_bandwidth / (subcarrier_num * fitting_coefficient * three_dB_cutoff));
 }
@@ -261,7 +266,7 @@ void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
 double calculateRfDownlinkUtilizationEfficiency(int serving_UE_num) {
     double system_utilization = calculateRfSystemUtilization(serving_UE_num);
 
-    return system_utilization * utilization_ratio / (1 + utilization_ratio);
+    return system_utilization * (utilization_ratio / (1 + utilization_ratio));
 }
 
 double calculateRfSystemUtilization(int serving_UE_num) {
@@ -279,5 +284,5 @@ double calculateRfSystemUtilization(int serving_UE_num) {
     denominator += p_t * p_s * p_d * t_d;
     denominator += p_t * (1 - p_s) * t_c;
 
-    return (p_s * p_t * propagation_delay) / (denominator);
+    return (p_s * p_t * propagation_delay) / denominator;
 }

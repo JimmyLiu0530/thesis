@@ -31,29 +31,27 @@ const double RF_AP_height = 3.5; // m
 const double VLC_AP_height = 3.5;
 const int VLC_AP_power = 9;
 const int VLC_AP_bandwidth = 300; // MHz
-const double noise_power_spectral_density = 1e-13;  //N_0 = 1e-19 A/Hz = 1e-13 A/MHz
+const double noise_power_spectral_density = 1e-13;  //N_0 = 1e-19 A^2/Hz = 1e-13 A^2/MHz
 const double conversion_efficiency = 0.53; // optical to electrical conversion efficiency
-const double optical_to_electric_power_ratio = 3; // κ
+const double optical_to_electric_power_ratio = 3.0; // κ
 
-// these values are found in "Resource Allocation in LiFi OFDMA Systems"
+// these two values are found in "Resource Allocation in LiFi OFDMA Systems"
 const int subcarrier_num = 64; // M = 64
 const int effective_subcarrier_num = subcarrier_num / 2 - 1; // M_e = M/2 - 1
-const int time_slot_num = 20; // K
+const int time_slot_num = 100; // K
 
 
 /*
     UE
 */
 const double UE_height = 1.5;
-const double high_demand = 40; // Mbps
-const double low_demand = 10; // Mbps
-const double HDU_proportion = 0.5; // proportion of high-demand user
+
 
 /*
     VLC channel
 */
-const double field_of_view = 180.0;
-const double PHI_half = 60.0; // semi-angle at half-illumination (phi_1/2)
+const double field_of_view = 180.0; // degree
+const double PHI_half = 60.0; // semi-angle at half-illumination in degree
 const double filter_gain = 1.0;
 const double refractive_index = 1.5;
 const double receiver_area = 1e-4; // 1 cm^2 = 0.0001 m^2
@@ -79,7 +77,7 @@ const double ACK_time = 140.0; // µs
 const double SIFS_time = 28.0; // µs
 const double PIFS_time = 80.0; // µs
 const double DIFS_time = 128.0; // µs
-const double slot_time = 52.0; // It is not given in benchmark paper. I infer this value by PIFS = SIFS + slot time, which is defined in ieee 802.11.
+const double slot_time = 52.0; // It is not given in benchmark paper. I infer this value by PIFS = SIFS + slot time based on ieee 802.11.
 const double propagation_delay = 1000.0; // µs
 const double utilization_ratio = 2.0; // ε
 
@@ -99,6 +97,6 @@ const double noise_variance = (1.0 - c_1 * c_1) * angle_variance * angle_varianc
 /*
     utility function
 */
-const double beta = 100.0; // fairness coefficient
+const double beta = 1.0; // fairness coefficient
 
 #endif // GLOBAL_CONFIGURATION_H
