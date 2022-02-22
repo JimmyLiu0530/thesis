@@ -66,11 +66,15 @@ std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::v
 std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
 std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
 
+std::vector<std::vector<std::vector<int>>> resource_unit_matrix_per_VLC_AP(VLC_AP_num,
+                                                                           std::vector<std::vector<int>> (effective_subcarrier_num+1,
+                                                                           std::vector<int> (time_slot_num, 0)));
+
 std::vector<double> recorded_avg_throughput_per_state(state_num, 0.0); // in Mbps
 std::vector<double> recorded_avg_satisfaction_per_state(state_num, 0.0);
 std::vector<double> recorded_fairness_index_per_state(state_num, 0.0); // fairness index of all states
 
-//std::vector<int> RF_cnt;
+std::vector<int> RF_cnt; // the number of UEs that the RF AP serves in each state
 
 
 
@@ -124,7 +128,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     fairness_index = proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
                                        VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
-                                        AP_asssociation_matrix, my_UE_list);
+                                        AP_asssociation_matrix, resource_unit_matrix_per_VLC_AP, my_UE_list);
 
 #else
 
@@ -137,14 +141,14 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     std::sort(my_UE_list.begin(), my_UE_list.end(), [](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
 
-    /*
+
     // calculate the number of UE connected to the RF AP
     int cnt = 0;
     for (int i = 0; i < AP_association_matrix[0].size(); i++)
         if (AP_association_matrix[0][i] == 1)
             cnt++;
 
-    RF_cnt.push_back(cnt);*/
+    RF_cnt.push_back(cnt);
 
     // use another storage to keep some information of each UE
     // since somehow get 0 when accessing these information through my_UE_list after Simulator::Run()
@@ -160,6 +164,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     std::cout << "avg data rate of state " << state << ": " << avg_data_rate << std::endl;
     std::cout << "fairness of state " << state << ": " << fairness_index << std::endl;
+    std::cout << "RF connection ratio: " << (double)cnt / UE_num * 100 << "%" << std::endl;
 
     recorded_avg_throughput_per_state[state] = avg_data_rate;
     recorded_avg_satisfaction_per_state[state] = avg_satisfaction;
@@ -357,18 +362,18 @@ int main(int argc, char *argv[])
     avg_fairness = avg_fairness / state_num;
 
 
-    /*
+
     // average percentage of WiFi connections
     double avg_RF_connection_ratio = 0.0;
     for (int i = 0; i < RF_cnt.size(); i++)
         avg_RF_connection_ratio += ((double)RF_cnt[i] / UE_num);
 
     avg_RF_connection_ratio /= RF_cnt.size();
-    */
+
 
     std::cout << "Avg. throughput of this experiment: " << avg_throughput << " Mbps" << std::endl;
     std::cout << "Fairness of this experiment: " << avg_fairness << std::endl;
-              //<< ", RF connection percentage: " << avg_RF_connection_ratio*100 << "%" << std::endl;
+    std::cout << "RF connection percentage: " << avg_RF_connection_ratio*100 << "%" << std::endl;
               //<< ", avg. satisfaction: " << avg_satisfaction << std::endl;
 
 

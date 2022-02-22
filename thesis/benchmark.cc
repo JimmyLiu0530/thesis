@@ -6,13 +6,14 @@
 #include <chrono>
 
 
-#include "benchmark.h"
-#include "channel.h"
-#include "my_UE_node.h"
 #include "print.h"
+#include "channel.h"
+#include "benchmark.h"
+#include "my_UE_node.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
+#include "global_configuration.h"
 
 
 double benchmarkDynamicLB(int &state,
