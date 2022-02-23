@@ -138,7 +138,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
 #endif
 
-
+    // since we would adjust the order of my_UE_list during APA&RA, we have to reorder it back after the end of each state
     std::sort(my_UE_list.begin(), my_UE_list.end(), [](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
 
 

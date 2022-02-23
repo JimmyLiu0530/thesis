@@ -40,4 +40,11 @@ std::vector<int> sortApBasedOnResidualResource(std::vector<std::vector<std::vect
                                                std::vector<std::vector<std::vector<int>>> &resource_unit_matrix_per_VLC_AP,
                                                MyUeNode &UE);
 
+bool checkSatisfactionUnderAP(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                              std::vector<std::vector<std::vector<int>>> &resource_unit_matrix_per_VLC_AP,
+                              std::unordered_set<int> &unallocated_UE_set,
+                              std::vector<MyUeNode> my_UE_list,
+                              int VLC_AP_index,
+                              int UE_index);
+
 #endif // PROPOSED_METHOD_H
