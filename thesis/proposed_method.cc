@@ -43,6 +43,8 @@ double proposedDynamicLB (int &state,
 
 }
 
+
+// assume we periodically call this algorithm to update
 void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                              std::vector<double> &RF_data_rate_vector,
                              std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
@@ -51,6 +53,18 @@ void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_
                              std::vector<int> &blocked_UE,
                              std::vector<MyUeNode> &my_UE_list)
 {
+    // pre-step: clear AP_association_matrix and resource_unit_matrix_per_VLC_AP
+    for (int i = 0; i < AP_association_matrix.size(); i++)
+        for (int j = 0; j < AP_association_matrix[i].size(); j++)
+            AP_association_matrix[i][j] = 0;
+
+     for (int i = 0; i < resource_unit_matrix_per_VLC_AP.size(); i++)
+        for (int j = 0; j < resource_unit_matrix_per_VLC_AP[i].size(); j++)
+                for (int k = 0; k < resource_unit_matrix_per_VLC_AP[i][j].size(); k++)
+                    resource_unit_matrix_per_VLC_AP[i][j][k] = 0;
+
+
+
     // step1: find the VLC AP with the best SINR for each UE. If the max SINR is smaller than 1, then choose the RF AP.
     std::vector<int> best_SINR_AP (UE_num, -1);
 
@@ -104,22 +118,21 @@ void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_
     for (int UE_idx = 0; UE_idx < my_UE_list.size(); UE_idx++) {
         /* APA */
         int chosen_AP = -1;
-
+        int UE_real_index = my_UE_list[UE_idx].getID();
         // best AP is not RF AP:
         //  find the AP with max residual resource after fulfilling the user u's demand
         //  and choose it as the user's serving AP.
-        if (best_SINR_AP[my_UE_list[UE_idx].getID()] != 0) {
+        if (best_SINR_AP[UE_real_index] != 0) {
             std::vector<int> VLC_AP_order = sortApBasedOnResidualResource(VLC_data_rate_matrix, resource_unit_matrix_per_VLC_AP, my_UE_list[UE_idx]);
             auto it = VLC_AP_order.begin();
 
             while (it != VLC_AP_order.end()) {
-                if ((*it) + RF_AP_num == best_SINR_AP[my_UE_list[UE_idx].getID()]) {
-                    chosen_AP = best_SINR_AP[my_UE_list[UE_idx].getID()];
+                if ((*it) + RF_AP_num == best_SINR_AP[mUE_real_index]) {
+                    chosen_AP = best_SINR_AP[UE_real_index];
                     break;
                 }
                 else { // have to consider whether the UEs under this AP will become unsatisfactory if allocating some resource to this UE
-                    if (checkSatisfactionUnderAP(VLC_data_rate_matrix, resource_unit_matrix_per_VLC_AP, unallocated_UE_under_VLC_AP[*it],
-                                                 my_UE_list, *it, my_UE_list[UE_idx].getID())) {
+                    if (checkSatisfactionUnderAP(VLC_data_rate_matrix, resource_unit_matrix_per_VLC_AP, unallocated_UE_under_VLC_AP[*it], my_UE_list, *it, UE_real_index)) {
                         chosen_AP = (*it) + RF_AP_num;
                         break;
                     }
@@ -127,13 +140,16 @@ void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_
                 it++;
             }
 
-            unallocated_UE_under_VLC_AP[best_SINR_AP[my_UE_list[UE_idx].getID()] - RF_AP_num].erase(UE_idx);
+            unallocated_UE_under_VLC_AP[best_SINR_AP[UE_real_index] - RF_AP_num].erase(UE_idx);
             my_UE_list[UE_idx].setCurrAssociatedAP(chosen_AP);
 
-            if (chosen_AP != -1)
-                AP_association_matrix[chosen_AP][my_UE_list[UE_idx].getID()] = 1;
-            else // this UE has no association with AP in this state
+            if (chosen_AP != -1) {
+                AP_association_matrix[chosen_AP][UE_real_index] = 1;
+            }
+            else { // this UE has no association with AP in this state
+                blocked_UE.push_back(UE_real_index);
                 continue;
+            }
 
 
             /* RA */
@@ -155,7 +171,7 @@ void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_
 
             while ((offered_data_rate < demand) && (subcarrier_index > 1)) {
                 if (resource_unit_matrix[subcarrier_idx][time_slot_idx] == 0) {
-                    offered_data_rate += VLC_data_rate_matrix[chosen_AP-RF_AP_num][my_UE_list[UE_idx].getID()][subcarrier_idx];
+                    offered_data_rate += VLC_data_rate_matrix[chosen_AP-RF_AP_num][UE_real_index][subcarrier_idx];
                     resource_unit_matrix[subcarrier_idx][time_slot_idx] = 1;
                 }
                 time_slot_idx--;
@@ -168,7 +184,7 @@ void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_
 
             // this AP cannot satisfies the demand of this UE although we give it the rest of all resource, so
             if (offered_data_rate < demand) {
-                blocked_UE.push_back(my_UE_list[UE_idx].getID());
+                blocked_UE.push_back(UE_real_index);
                 offered_data_rate = 0.0;
             }
             else {
@@ -179,7 +195,7 @@ void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_
         }
         else { // best AP is RF_AP
             chosen_AP = best_SINR_AP[my_UE_list[UE_idx].getID()];
-            AP_association_matrix[chosen_AP][my_UE_list[UE_idx].getID()] = 1;
+            AP_association_matrix[chosen_AP][UE_real_index] = 1;
             my_UE_list[UE_idx].setCurrAssociatedAP(chosen_AP);
 
             /* RA */
