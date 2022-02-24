@@ -27,6 +27,7 @@ void proposedMethodForState0(std::vector<std::vector<std::vector<double>>> &VLC_
                              std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                              std::vector<std::vector<int>> &AP_association_matrix,
                              std::vector<std::vector<std::vector<int>>> &resource_unit_matrix_per_VLC_AP,
+                             std::vector<int> &blocked_UE,
                              std::vector<MyUeNode> &my_UE_list);
 
 void proposedMethodForStateN(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
@@ -34,6 +35,7 @@ void proposedMethodForStateN(std::vector<std::vector<std::vector<double>>> &VLC_
                              std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                              std::vector<std::vector<int>> &AP_association_matrix,
                              std::vector<std::vector<std::vector<int>>> &resource_unit_matrix_per_VLC_AP,
+                             std::vector<int> &blocked_UE,
                              std::vector<MyUeNode> &my_UE_list);
 
 std::vector<int> sortApBasedOnResidualResource(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,

@@ -24,7 +24,6 @@ const int state_num = 1000;
 */
 const double RF_AP_height = 3.5; // m
 
-
 /*
     VLC AP
 */
@@ -45,6 +44,9 @@ const int time_slot_num = 20; // K
     UE
 */
 const double UE_height = 1.5;
+
+// minimum acceptable discount on user's demand
+//const double min_discount = 0.7;
 
 
 /*

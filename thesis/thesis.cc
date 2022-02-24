@@ -67,8 +67,9 @@ std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
 std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
 
 std::vector<std::vector<std::vector<int>>> resource_unit_matrix_per_VLC_AP(VLC_AP_num,
-                                                                           std::vector<std::vector<int>> (effective_subcarrier_num+1,
-                                                                           std::vector<int> (time_slot_num, 0)));
+                                                                           std::vector<std::vector<int>> (effective_subcarrier_num+1, std::vector<int> (time_slot_num, 0)));
+
+//std::vector<double> demand_discount_per_VLC_AP(VLC_AP_num, 1.0)
 
 std::vector<double> recorded_avg_throughput_per_state(state_num, 0.0); // in Mbps
 std::vector<double> recorded_avg_satisfaction_per_state(state_num, 0.0);
