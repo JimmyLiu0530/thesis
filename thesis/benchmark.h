@@ -8,7 +8,7 @@
 #include "my_UE_node.h"
 
 
-double benchmarkDynamicLB(int &state,
+void benchmarkDynamicLB(int &state,
                            NodeContainer &RF_AP_node,
                            NodeContainer &VLC_AP_nodes,
                            NodeContainer &UE_nodes,

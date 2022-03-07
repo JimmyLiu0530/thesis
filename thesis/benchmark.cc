@@ -16,7 +16,7 @@
 #include "global_configuration.h"
 
 
-double benchmarkDynamicLB(int &state,
+void benchmarkDynamicLB(int &state,
                        NodeContainer &RF_AP_node,
                        NodeContainer &VLC_AP_nodes,
                        NodeContainer &UE_nodes,
@@ -77,20 +77,6 @@ double benchmarkDynamicLB(int &state,
         std::cout << std::endl;
     }
 
-    // calculate and return the fairness of the current state
-    double fairness_index = 0.0;
-    double square_of_sum = 0.0;
-    double sum_of_square = 0.0;
-
-    for (int i = 0; i < UE_num; i++) {
-        double throughput = my_UE_list[i].getLastThroughput();
-
-        square_of_sum += throughput;
-        sum_of_square += pow(throughput, 2);
-    }
-
-    square_of_sum = pow(square_of_sum, 2);
-    fairness_index = square_of_sum / (UE_num * sum_of_square);
 
 #if DEBUG_MODE
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
@@ -105,8 +91,6 @@ double benchmarkDynamicLB(int &state,
     }
     std::cout<<std::endl;
 #endif // DEBUG_MODE
-
-    return fairness_index;
 }
 
 std::vector<int> initializedStep(std::vector<double> &RF_data_rate_vector,
