@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <cmath>
+#include <tuple>
 
 
 #include "my_UE_node.h"
@@ -170,6 +171,20 @@ void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
 }
 
 
+#if PROPOSED_METHOD
+
+void MyUeNode::useResourceUnit(ResourceUnitRangeType new_RU) {
+    RU_used.push_back(new_RU);
+}
+
+void MyUeNode::updateNthResourceUnit(int n, ResourceUnitRangeType new_RU) {
+    if (n < RU_used.size())
+        RU_used[n] = new_RU;
+    else
+        std::cout << "Access to RU_used vector is out of bound\n";
+}
+
+#endif // PROPOSED_METHOD
 
 
 

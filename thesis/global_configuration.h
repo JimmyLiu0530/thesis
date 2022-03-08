@@ -101,4 +101,10 @@ const double noise_variance = (1.0 - c_1 * c_1) * angle_variance * angle_varianc
 */
 const double beta = 1.0; // fairness coefficient
 
+
+/*
+    weight in APA
+*/
+double weight = 0.8;
+
 #endif // GLOBAL_CONFIGURATION_H

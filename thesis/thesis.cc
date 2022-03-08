@@ -58,13 +58,12 @@ NS_LOG_COMPONENT_DEFINE ("TcpLargeTransfer");
 std::vector<double> Received(1, 0.0);
 std::vector<double> theTime(1, 0.0);
 
-
+std::vector<double> demand_discount_per_AP(RF_AP_num + VLC_AP_num, 0.8);
 std::vector<std::vector<int>> AP_association_matrix(RF_AP_num+VLC_AP_num, std::vector<int> (UE_num, 0));
 
 std::vector<int> RF_cnt; // the number of UEs that the RF AP serves in each state
 std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
 
-std::vector<double> demand_discount_per_VLC_AP(VLC_AP_num, 0.8);
 std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> (UE_num, 0.0));
 std::vector<std::tuple<int, int>> first_empty_RU_position (VLC_AP_num, std::tuple<int, int> (std::make_tuple(effective_subcarrier_num, time_slot_num-1))); // the position of the first empty RU for each VLC AP (view from high freq to low)
 std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in dB
@@ -126,7 +125,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix, VLC_SINR_matrix, RF_data_rate_vector,
                       VLC_data_rate_matrix, AP_asssociation_matrix, resource_unit_matrix_per_VLC_AP,
-                      demand_discount_per_VLC_AP, first_empty_RU_position, my_UE_list);
+                      demand_discount_per_AP, first_empty_RU_position, my_UE_list);
 
 #else
 
