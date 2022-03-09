@@ -35,7 +35,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <string>
-#include <tuple>
+#include <pair>
 
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
@@ -65,7 +65,7 @@ std::vector<int> RF_cnt; // the number of UEs that the RF AP serves in each stat
 std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
 
 std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> (UE_num, 0.0));
-std::vector<std::tuple<int, int>> first_empty_RU_position (VLC_AP_num, std::tuple<int, int> (std::make_tuple(effective_subcarrier_num, time_slot_num-1))); // the position of the first empty RU for each VLC AP (view from high freq to low)
+std::vector<std::pair<int, int>> first_empty_RU_position (VLC_AP_num, std::pair<int, int> (std::make_pair(effective_subcarrier_num, time_slot_num-1))); // the position of the first empty RU for each VLC AP (view from high freq to low)
 std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in dB
 std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
 std::vector<std::vector<std::vector<int>>> resource_unit_matrix_per_VLC_AP(VLC_AP_num, std::vector<std::vector<int>> (effective_subcarrier_num+1, std::vector<int> (time_slot_num, 0)));
@@ -136,7 +136,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
 #endif
 
     // since we would adjust the order of my_UE_list during APA&RA, we have to reorder it back after the end of each state
-    std::sort(my_UE_list.begin(), my_UE_list.end(), [](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
+    std::sort(my_UE_list.begin(), my_UE_list.end(), [](const MyUeNode &a, const MyUeNode &b){return a.getID() < b.getID();});
 
 
     // calculate the number of UE connected to the RF AP

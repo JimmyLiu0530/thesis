@@ -107,4 +107,10 @@ const double beta = 1.0; // fairness coefficient
 */
 double weight = 0.8;
 
+
+/*
+    the unit of adjustment on demand discounting ratio
+*/
+double delta = 0.05;
+
 #endif // GLOBAL_CONFIGURATION_H
