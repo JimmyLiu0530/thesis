@@ -171,20 +171,32 @@ void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
 }
 
 
-#if PROPOSED_METHOD
 
 void MyUeNode::useResourceUnit(ResourceUnitRangeType new_RU) {
-    RU_used.push_back(new_RU);
+    RU_block.push_back(new_RU);
 }
 
-void MyUeNode::updateNthResourceUnit(int n, ResourceUnitRangeType new_RU) {
-    if (n < RU_used.size())
-        RU_used[n] = new_RU;
+void MyUeNode::updateNthResourceUnitBlock(int n, ResourceUnitRangeType new_RU) {
+    if (n < RU_block.size())
+        RU_block[n] = new_RU;
     else
-        std::cout << "Access to RU_used vector is out of bound\n";
+        std::cout << "Access to RU_block vector is out of bound\n";
 }
 
-#endif // PROPOSED_METHOD
+size_t MyUeNode::getRuBlockSize(void) {
+    return RU_block.size();
+}
+
+ResourceUnitRangeType MyUeNode::getNthResourceUnitBlock(int n) {
+    if (n < RU_block.size())
+        return RU_block[n];
+    else
+        std::cout << "Access to RU_block vector is out of bound\n";
+}
+
+void MyUeNode::removeLastResourceUnitBlock(void) {
+    RU_block.pop_back();
+}
 
 
 

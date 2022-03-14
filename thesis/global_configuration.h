@@ -113,4 +113,9 @@ double weight = 0.8;
 */
 double delta = 0.05;
 
+/*
+    the period of the complete configuration (in states)
+*/
+int complete_config_period = 5;
+
 #endif // GLOBAL_CONFIGURATION_H

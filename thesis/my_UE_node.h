@@ -52,7 +52,10 @@ public:
     void randomOrientationAngle(Ptr<Node> UE);
 
     void useResourceUnit(ResourceUnitRangeType new_RU);
-    void updateNthResourceUnit(int n, ResourceUnitRangeType new_RU);
+    void updateNthResourceUnitBlock(int n, ResourceUnitRangeType new_RU);
+    ResourceUnitRangeType MyUeNode::getNthResourceUnitBlock(int n);
+    void removeLastResourceUnitBlock(void);
+    size_t getRuBlockSize(void);
 
 private:
     int node_ID;
@@ -72,7 +75,7 @@ private:
 
     // a vector of positions that record start and end of used RU by this UE
     // of the form <<subcarrier start, time slot start>, <subcarrier end, time slot end>>
-    std::vector<ResourceUnitRangeType> RU_used;
+    std::vector<ResourceUnitRangeType> RU_block;
 
     void setPolarAngle(double new_polar_angle);
     void setAzimuthAngle(double new_azimuth_angle);
