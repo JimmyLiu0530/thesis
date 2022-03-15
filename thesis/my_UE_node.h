@@ -3,7 +3,6 @@
 
 #include <random>
 #include <chrono>
-#include <pair>
 
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -12,7 +11,7 @@
 
 using namespace ns3;
 
-typedef std::pair<std::pair<int,int>, std::pair<int,int>> ResourceUnitRangeType;
+typedef std::pair<std::pair<int,int>, std::pair<int,int>> RuRangeType;
 
 
 class MyUeNode
@@ -51,11 +50,14 @@ public:
     double getAzimuthAngle(void);
     void randomOrientationAngle(Ptr<Node> UE);
 
-    void useResourceUnit(ResourceUnitRangeType new_RU);
-    void updateNthResourceUnitBlock(int n, ResourceUnitRangeType new_RU);
-    ResourceUnitRangeType MyUeNode::getNthResourceUnitBlock(int n);
+    void useResourceUnit(RuRangeType new_RU);
+    void updateNthResourceUnitBlock(int n, RuRangeType new_RU);
+    RuRangeType getNthResourceUnitBlock(int n);
     void removeLastResourceUnitBlock(void);
     size_t getRuBlockSize(void);
+    void clearRuBlock(void);
+    std::vector<RuRangeType> getWholeRuBlock(void);
+
 
 private:
     int node_ID;
@@ -75,7 +77,7 @@ private:
 
     // a vector of positions that record start and end of used RU by this UE
     // of the form <<subcarrier start, time slot start>, <subcarrier end, time slot end>>
-    std::vector<ResourceUnitRangeType> RU_block;
+    std::vector<RuRangeType> RU_block;
 
     void setPolarAngle(double new_polar_angle);
     void setAzimuthAngle(double new_azimuth_angle);

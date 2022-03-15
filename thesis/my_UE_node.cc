@@ -172,11 +172,11 @@ void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
 
 
 
-void MyUeNode::useResourceUnit(ResourceUnitRangeType new_RU) {
+void MyUeNode::useResourceUnit(RuRangeType new_RU) {
     RU_block.push_back(new_RU);
 }
 
-void MyUeNode::updateNthResourceUnitBlock(int n, ResourceUnitRangeType new_RU) {
+void MyUeNode::updateNthResourceUnitBlock(int n, RuRangeType new_RU) {
     if (n < RU_block.size())
         RU_block[n] = new_RU;
     else
@@ -187,7 +187,7 @@ size_t MyUeNode::getRuBlockSize(void) {
     return RU_block.size();
 }
 
-ResourceUnitRangeType MyUeNode::getNthResourceUnitBlock(int n) {
+RuRangeType MyUeNode::getNthResourceUnitBlock(int n) {
     if (n < RU_block.size())
         return RU_block[n];
     else
@@ -198,7 +198,13 @@ void MyUeNode::removeLastResourceUnitBlock(void) {
     RU_block.pop_back();
 }
 
+void MyUeNode::clearRuBlock(void) {
+    RU_block.clear();
+}
 
+std::vector<RuRangeType> MyUeNode::getWholeRuBlock(void) {
+    return RU_block;
+}
 
 
 

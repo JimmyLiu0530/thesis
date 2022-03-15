@@ -105,17 +105,17 @@ const double beta = 1.0; // fairness coefficient
 /*
     weight in APA
 */
-double weight = 0.8;
+const double RU_throughput_weight = 0.8;
 
 
 /*
     the unit of adjustment on demand discounting ratio
 */
-double delta = 0.05;
+const double delta_p = 0.05;
 
 /*
     the period of the complete configuration (in states)
 */
-int complete_config_period = 5;
+const int complete_config_period = 5;
 
 #endif // GLOBAL_CONFIGURATION_H
