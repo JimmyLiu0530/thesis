@@ -4,19 +4,19 @@
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
 
-#define DEBUG_MODE 0
-#define PROPOSED_METHOD 0
+#define DEBUG_MODE 1
+#define PROPOSED_METHOD 1
 
 const double PI = boost::math::constants::pi<double>();
 const double room_size = 16;
 const int RF_AP_num = 1;
 const int VLC_AP_num = 16;
 const int VLC_AP_per_row = 4;
-const int UE_num = 200;
+const int UE_num = 10;
 const double time_period = 0.5; // s
 const double avg_speed = 1.0;
 const double pause_time = 0.0;
-const int state_num = 1000;
+const int state_num = 1;
 
 
 /*
@@ -109,9 +109,11 @@ const double RU_throughput_weight = 0.8;
 
 
 /*
-    the unit of adjustment on demand discounting ratio
+    parameters related to demand discounting ratio
 */
 const double delta_p = 0.05;
+const double min_discount_ratio = 0.6;
+
 
 /*
     the period of the complete configuration (in states)

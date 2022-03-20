@@ -46,7 +46,6 @@ void printVlcSinrMatrix(std::vector<std::vector<std::vector<double>>> &VLC_SINR_
     std::cout << std::endl;
 }
 
-
 void printRfDataRateVector(std::vector<double> &RF_data_rate_vector)
 {
 
@@ -58,7 +57,6 @@ void printRfDataRateVector(std::vector<double> &RF_data_rate_vector)
 
     std::cout << std::endl << std::endl;
 }
-
 
 void printVlcDataRateMatrix(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix)
 {
@@ -84,8 +82,6 @@ void printVlcDataRateMatrix(std::vector<std::vector<std::vector<double>>> &VLC_d
     std::cout << std::endl;
 }
 
-
-
 void printApAssociationMatrix(std::vector<std::vector<int>> &AP_association_matrix)
 {
 
@@ -101,7 +97,6 @@ void printApAssociationMatrix(std::vector<std::vector<int>> &AP_association_matr
 
     std::cout << std::endl;
 }
-
 
 void printRfApPosition(ns3::NodeContainer &RF_AP_node) {
     int RF_AP_index = 1;
@@ -119,9 +114,18 @@ void printRfApPosition(ns3::NodeContainer &RF_AP_node) {
 void printVlcApPosition(ns3::NodeContainer &VLC_AP_nodes) {
     int VLC_AP_index = 1;
 
+    std::fstream output;
+    output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/UE_position.csv", std::ios::out | std::ios::trunc);
+    if (!output.is_open()) {
+        std::cout << "Fail to open file\n";
+    }
+
     for (NodeContainer::Iterator it = VLC_AP_nodes.Begin(); it != VLC_AP_nodes.End(); ++it) {
         Ptr<MobilityModel> VLC_mobility_model = (*it)->GetObject<MobilityModel>();
         Vector pos = VLC_mobility_model->GetPosition();
+
+        output << pos.x << "," << pos.y << ",";
+        output << std::endl;
 
         std::cout << "Position of VLC_AP " << VLC_AP_index++ << " =(" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
     }
@@ -132,12 +136,24 @@ void printVlcApPosition(ns3::NodeContainer &VLC_AP_nodes) {
 void printUePosition(ns3::NodeContainer &UE_nodes) {
     int UE_index = 1;
 
+    std::fstream output;
+    output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/UE_position.csv", std::ios::out | std::ios::app);
+    if (!output.is_open()) {
+        std::cout << "Fail to open file\n";
+    }
+
+
     for (NodeContainer::Iterator it = UE_nodes.Begin(); it != UE_nodes.End(); ++it) {
         Ptr<MobilityModel> UE_mobility_model = (*it)->GetObject<MobilityModel>();
         Vector pos = UE_mobility_model->GetPosition();
 
+        output << pos.x << "," << pos.y << ",";
+        output << std::endl;
+
         std::cout << "Position of UE " << UE_index++ << " =(" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
     }
+
+    output << std::endl;
 
     std::cout << std::endl;
 }

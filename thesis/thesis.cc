@@ -59,7 +59,7 @@ std::vector<double> theTime(1, 0.0);
 
 std::vector<double> demand_discount_per_AP(RF_AP_num + VLC_AP_num, 0.8);
 std::vector<double> avg_satisfaction_per_AP(RF_AP_num + VLC_AP_num, 0.0);
-std::vector<std::vector<int>> AP_association_matrix(RF_AP_num+VLC_AP_num, std::vector<int> (UE_num, 0));
+std::vector<std::vector<int>> AP_association_matrix(RF_AP_num + VLC_AP_num, std::vector<int> (UE_num, 0));
 
 
 std::vector<int> RF_cnt; // the number of UEs that the RF AP serves in each state
@@ -127,7 +127,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
 #if PROPOSED_METHOD
 
     proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix, VLC_SINR_matrix, RF_data_rate_vector,
-                      VLC_data_rate_matrix, AP_asssociation_matrix, RU_matrix_per_VLC_AP,
+                      VLC_data_rate_matrix, AP_association_matrix, RU_matrix_per_VLC_AP,
                       demand_discount_per_AP, first_empty_RU_position, avg_satisfaction_per_AP, my_UE_list);
 
 #else
@@ -188,7 +188,6 @@ void updateToNextState(NodeContainer &RF_AP_node,
     recorded_avg_throughput_per_state[state] = avg_data_rate;
     recorded_avg_satisfaction_per_state[state] = avg_satisfaction;
     recorded_fairness_index_per_state[state] = fairness_index;
-
 
     state++;
 

@@ -3,7 +3,6 @@
 #include <string>
 #include <chrono>
 #include <cmath>
-#include <tuple>
 
 
 #include "my_UE_node.h"
@@ -172,8 +171,8 @@ void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
 
 
 
-void MyUeNode::useResourceUnit(RuRangeType new_RU) {
-    RU_block.push_back(new_RU);
+void MyUeNode::recordResourceUnit(std::pair<int,int> start, std::pair<int,int> tail) {
+    RU_block.emplace_back(start, tail);
 }
 
 void MyUeNode::updateNthResourceUnitBlock(int n, RuRangeType new_RU) {
@@ -204,6 +203,11 @@ void MyUeNode::clearRuBlock(void) {
 
 std::vector<RuRangeType> MyUeNode::getWholeRuBlock(void) {
     return RU_block;
+}
+
+void MyUeNode::arrangeRuBlock(void) {
+    std::sort(RU_block.begin(), RU_block.end(), [](RuRangeType &a, RuRangeType& b){
+                                                return ( (a.first.first > b.first.first) || (a.first.first == b.first.first && a.first.second > b.first.second) );});
 }
 
 

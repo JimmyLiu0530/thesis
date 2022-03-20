@@ -20,8 +20,11 @@ std::vector<MyUeNode> initializeMyUeNodeList(NodeContainer &UE_nodes)
     // first, randomly generate required data rate and orientation angle for each UE
     // then, instantiate an new myUeNode object and add it into my_UE_list
 
+    std::uniform_real_distribution<double> uniform(10, 40);
+    std::default_random_engine generator (std::chrono::system_clock::now().time_since_epoch().count());
+
     for (int i = 0; i < UE_num; i++) {
-        double required_data_rate = 1.0;
+        double required_data_rate = uniform(generator);
 
         Ptr<MobilityModel> UE_mobility_model = (UE_nodes.Get(i))->GetObject<MobilityModel>();
         Vector pos = UE_mobility_model->GetPosition();

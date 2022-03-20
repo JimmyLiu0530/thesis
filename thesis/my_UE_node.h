@@ -50,13 +50,14 @@ public:
     double getAzimuthAngle(void);
     void randomOrientationAngle(Ptr<Node> UE);
 
-    void useResourceUnit(RuRangeType new_RU);
+    void recordResourceUnit(std::pair<int,int> start, std::pair<int,int> tail);
     void updateNthResourceUnitBlock(int n, RuRangeType new_RU);
     RuRangeType getNthResourceUnitBlock(int n);
     void removeLastResourceUnitBlock(void);
     size_t getRuBlockSize(void);
     void clearRuBlock(void);
     std::vector<RuRangeType> getWholeRuBlock(void);
+    void arrangeRuBlock(void);
 
 
 private:
