@@ -70,7 +70,7 @@ double resourceAllocation(std::vector<double> &VLC_data_rate_matrix,
                             MyUeNode &UE_node);
 
 
-void residualResourceAllocation(double discount_ratio,
+void residualResourceAllocation(double &discount_ratio,
                                 std::vector<std::vector<double>> &VLC_data_rate_matrix,
                                 std::vector<double> &throughput,
                                 std::vector<double> &satisfaction,
@@ -96,7 +96,6 @@ void updateInfoToMyUeList(std::vector<double> &throughput,
                           std::vector<double> &satisfaction,
                           std::vector<MyUeNode> &my_UE_list);
 
-void calculateAvgSatisfactionForEachAP(std::vector<std::vector<int>> &serving_UE, std::vector<double> &satisfaction, std::vector<double> &avg_satisfaction_per_AP);
 
 void makeUpResourceDifference(double discount_ratio,
                               std::vector<std::vector<double>> &VLC_data_rate_matrix,
@@ -117,9 +116,11 @@ void allocateResourceEqually(std::vector<std::vector<double>> &VLC_data_rate_mat
 
 void updateSatisfaction(std::vector<int> &serving_UE, std::vector<double> &throughput, std::vector<double> &satisfaction, std::vector<MyUeNode> &my_UE_list);
 
+void calculateAvgSatisfactionForEachAP(std::vector<std::vector<int>> &serving_UE, std::vector<double> &satisfaction, std::vector<double> &avg_satisfaction_per_AP);
+
 int findFirstEffectiveSubcarrier(std::vector<double> &VLC_data_rate_matrix, int &subcarrier_idx, int &time_slot_idx);
 
-void backToLastRU(int &subcarrier_idx, int &time_slot_idx);
+void goToPrevRU(int &subcarrier_idx, int &time_slot_idx);
 
 void goToNextRU(int &subcarrier_idx, int &time_slot_idx);
 

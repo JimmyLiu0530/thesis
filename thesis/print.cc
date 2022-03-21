@@ -171,7 +171,7 @@ void printMyUeList(std::vector<MyUeNode> &my_UE_list) {
 }
 
 void printResourceUnitMatrix(std::vector<std::vector<std::vector<int>>> &resource_unit_matrix, int VLC_AP_index) {
-    std::cout << "RU Matrix of AP " << VLC_AP_index << " as below: " << std::endl;
+    std::cout << "RU Matrix of VLC AP " << VLC_AP_index << " as below: " << std::endl;
 
     for (int i = 0; i < resource_unit_matrix[VLC_AP_index].size(); i++) {
         for (int j = 0; j < resource_unit_matrix[VLC_AP_index][i].size(); j++) {

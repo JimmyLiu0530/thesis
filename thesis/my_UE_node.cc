@@ -102,8 +102,10 @@ std::vector<double> MyUeNode::getSatisfactionHistory(void) {
 }
 
 double MyUeNode::getLastSatisfaction(void) {
-    if (satisfaction_per_state.empty())
+    if (satisfaction_per_state.empty()) {
+        std::cout << "user " << getID() << "'s satisfaction vector is empty\n";
         return 0.0;
+    }
 
     return satisfaction_per_state.back();
 }

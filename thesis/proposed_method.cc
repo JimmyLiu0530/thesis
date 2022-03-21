@@ -49,9 +49,9 @@ void proposedDynamicLB (int &state,
 #if DEBUG_MODE
     std::cout << "the number of UEs being rejected: " << rejected_UE.size() << std::endl;
 
-    for (int i = 0; i < VLC_AP_num; i++) {
+    /*for (int i = 0; i < VLC_AP_num; i++) {
         printResourceUnitMatrix(RU_matrix_per_VLC_AP, i);
-    }
+    }*/
 #endif // DEBUG_MODE
 
 }
@@ -109,7 +109,7 @@ void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SIN
 
             // since UEs can get at most their demand multiplied by demand discount, return one RU back
             if (discounted_demand < 0) {
-                backToLastRU(subcarrier_idx, time_slot_idx);
+                goToPrevRU(subcarrier_idx, time_slot_idx);
                 local_RU_matrix[VLC_AP_idx][subcarrier_idx][time_slot_idx] = 1;
             }
 
@@ -161,7 +161,7 @@ void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SIN
 
                     // since UEs can get at most their demand multiplied by demand discount, return one RU backs
                     if (offered_data_rate > discounted_demand) {
-                        backToLastRU(subcarrier_idx, time_slot_idx);
+                        goToPrevRU(subcarrier_idx, time_slot_idx);
                         offered_data_rate -= VLC_data_rate_matrix[VLC_AP_idx][UE_idx][subcarrier_idx];
                         // local_RU_matrix[VLC_AP_idx][subcarrier_idx][time_slot_idx] = 1;
                     }
@@ -308,8 +308,10 @@ void completeConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SI
                                                                     UE_demand, demand_discount_per_AP, first_empty_RU_position, my_UE_list[i]);
             int chosen_AP = result.first;
 
-            if (chosen_AP < 0) // no serving AP
+            if (chosen_AP < 0) { // no serving AP
                 rejected_UE.push_back(UE_idx);
+                my_UE_list[i].setCurrAssociatedAP(chosen_AP);
+            }
             else {
                 // update APA result
                 AP_association_matrix[chosen_AP][UE_idx] = 1;
@@ -349,6 +351,7 @@ void completeConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SI
         residualResourceAllocation(demand_discount_per_AP[VLC_AP_idx + RF_AP_num], VLC_data_rate_matrix[VLC_AP_idx], throughput, satisfaction, serving_UE[VLC_AP_idx + RF_AP_num],
                                    first_empty_RU_position[VLC_AP_idx], RU_matrix_per_VLC_AP[VLC_AP_idx], my_UE_list);
     }
+
 
     // finally, update throughput each UE gets in this state
     updateInfoToMyUeList(throughput, satisfaction, my_UE_list);
@@ -431,7 +434,7 @@ std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vecto
 
             /*// since UEs can get at most their demand multiplied by demand discount, return one RU back
             if (discounted_demand < 0) {
-                backToLastRU(subcarrier_idx, time_slot_idx);
+                goToPrevRU(subcarrier_idx, time_slot_idx);
                 R_matrix_per_VLC_AP[VLC_AP_idx][subcarrier_idx][time_slot_idx] = 1;
             }*/
 
@@ -465,7 +468,7 @@ std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vecto
 
             /*// since UEs can get at most their demand multiplied by demand discount, return one RU backs
             if (offered_data_rate > discounted_demand) {
-                backToLastRU(subcarrier_idx, time_slot_idx);
+                goToPrevRU(subcarrier_idx, time_slot_idx);
                 offered_data_rate -= VLC_data_rate_matrix[VLC_AP_idx][UE_idx][subcarrier_idx];
                 RU_matrix_per_VLC_AP[VLC_AP_idx][subcarrier_idx][time_slot_idx] = 1;
             }*/
@@ -482,23 +485,28 @@ std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vecto
         }
     }
 
-    // step2: after all VLC APs finished allocation, choose the one with max number of residual RU and offered data rate
+    // step2: after all VLC APs finished allocation, choose the one with max offered data rate and residual RUs
     int result_VLC_AP = -1;
-    double max_value = -1;
+    std::pair<int, double> max_value = std::make_pair(-1, -1);
 
     for (int VLC_AP_idx = 0; VLC_AP_idx < VLC_AP_pair.size(); VLC_AP_idx++) {
-        if (VLC_AP_pair[VLC_AP_idx].second == 0.0)
+        if (VLC_AP_pair[VLC_AP_idx].second == 0.0) // skip those VLC APs which provide no data rate
             continue;
 
-        double value = (1 - RU_throughput_weight) * VLC_AP_pair[VLC_AP_idx].first + RU_throughput_weight * VLC_AP_pair[VLC_AP_idx].second;
-
-        if (value > max_value) {
+        if (VLC_AP_pair[VLC_AP_idx].second > max_value.second) {
+            max_value = VLC_AP_pair[VLC_AP_idx];
             result_VLC_AP = VLC_AP_idx;
-            max_value = value;
+        }
+        else if (VLC_AP_pair[VLC_AP_idx].second == max_value.second) {
+            if (VLC_AP_pair[VLC_AP_idx].first > max_value.first) {
+                max_value = VLC_AP_pair[VLC_AP_idx];
+                result_VLC_AP = VLC_AP_idx;
+            }
         }
     }
 
-    if (max_value > 0.0 && (VLC_AP_pair[result_VLC_AP].second >= UE_node.getRequiredDataRate() * demand_discount_per_AP[RF_AP_num + result_VLC_AP])) {
+    //&& (VLC_AP_pair[result_VLC_AP].second >= UE_node.getRequiredDataRate() * demand_discount_per_AP[RF_AP_num + result_VLC_AP])
+    if (max_value.second > 0.0) {
         return std::make_pair(result_VLC_AP + RF_AP_num, VLC_AP_pair[result_VLC_AP].second);
     }
 
@@ -506,11 +514,11 @@ std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vecto
     // step3: if no VLC AP can serve this UE, then try RF AP
     int i = 0;
     for (; i < served_by_RF.size(); i++) {
-        if (UE_demand[served_by_RF[i]] * demand_discount_per_AP[0] < RF_data_rate_vector[served_by_RF.size()])
+        if (UE_demand[served_by_RF[i]] * demand_discount_per_AP[0] > RF_data_rate_vector[served_by_RF.size()])
             break;
     }
 
-    if (i == served_by_RF.size() && UE_demand[UE_idx] * demand_discount_per_AP[0] >= RF_data_rate_vector[served_by_RF.size()+1]) {
+    if (i == served_by_RF.size() && UE_demand[UE_idx] * demand_discount_per_AP[0] <= RF_data_rate_vector[served_by_RF.size()+1]) {
         served_by_RF.push_back(UE_idx);
         return std::make_pair(0, RF_data_rate_vector[served_by_RF.size()+1]);
     }
@@ -565,7 +573,7 @@ double resourceAllocation(std::vector<double> &VLC_data_rate_matrix,
 
     /*// since UEs can get at most their demand multiplied by demand discount, return one RU back
     if (offered_data_rate < 0) {
-        backToLastRU(subcarrier_idx, time_slot_idx);
+        goToPrevRU(subcarrier_idx, time_slot_idx);
         RU_matrix[subcarrier_idx][time_slot_idx] = 0;
         offered_data_rate -= VLC_data_rate_matrix[subcarrier_idx];
     }*/
@@ -574,7 +582,7 @@ double resourceAllocation(std::vector<double> &VLC_data_rate_matrix,
         first_empty_RU_position = std::make_pair(subcarrier_idx, time_slot_idx);
 
     if (start.first != subcarrier_idx || start.second != time_slot_idx) {
-        backToLastRU(subcarrier_idx, time_slot_idx); // we have to go back one RU, since the pointer stops at one RU ahead of the last RU this UE uses
+        goToPrevRU(subcarrier_idx, time_slot_idx); // we have to go back one RU, since the pointer stops at one RU ahead of the last RU this UE uses
         UE_node.recordResourceUnit(start, std::make_pair(subcarrier_idx, time_slot_idx));
     }
 
@@ -582,7 +590,7 @@ double resourceAllocation(std::vector<double> &VLC_data_rate_matrix,
 }
 
 
-void residualResourceAllocation(double discount_ratio,
+void residualResourceAllocation(double &discount_ratio,
                                 std::vector<std::vector<double>> &VLC_data_rate_matrix,
                                 std::vector<double> &throughput,
                                 std::vector<double> &satisfaction,
@@ -652,25 +660,28 @@ void takeResourceBack(double discount_ratio,
         int RU_block_idx = my_UE_list[UE_idx].getRuBlockSize() - 1;
         while (resource_return > 0 && RU_block_idx >= 0) {
             RuRangeType range = my_UE_list[UE_idx].getNthResourceUnitBlock(RU_block_idx);
-            std::pair<int, int> start = range.first;
-            std::pair<int, int> tail = range.second;
+            std::pair<int, int> start = range.second;
+            std::pair<int, int> tail = range.first;
 
-            while (resource_return > 0 && (start.first > tail.first || (start.first == tail.first && start.second >= tail.second))) {
+            while (resource_return > 0 && (start.first < tail.first || (start.first == tail.first && start.second <= tail.second))) {
                 resource_return -= VLC_data_rate_matrix[UE_idx][start.first];
                 throughput[UE_idx] -= VLC_data_rate_matrix[UE_idx][start.first];
 
-                RU_matrix[start.first][start.second] = 1;
+                RU_matrix[start.first][start.second] = 0;
 
-                if (first_empty_RU_position.first < start.first || (first_empty_RU_position.first == start.first && first_empty_RU_position.second < start.second))
-                    first_empty_RU_position = start;
-
-                goToNextRU(start.first, start.second);
+                goToPrevRU(start.first, start.second);
             }
 
-            if (start.first <= tail.first && start.second < tail.second)
+            goToNextRU(start.first, start.second); // make "start" point to the last released RU
+            if (first_empty_RU_position.first < start.first || (first_empty_RU_position.first == start.first && first_empty_RU_position.second < start.second))
+                    first_empty_RU_position = start;
+
+            if (start.first == tail.first && start.second == tail.second)
                 my_UE_list[UE_idx].removeLastResourceUnitBlock();
-            else
+            else {
+                goToPrevRU(start.first, start.second);
                 my_UE_list[UE_idx].updateNthResourceUnitBlock(RU_block_idx, std::make_pair(start, tail));
+            }
 
             RU_block_idx--;
         }
@@ -713,20 +724,6 @@ void updateInfoToMyUeList(std::vector<double> &throughput,
     }
 }
 
-void calculateAvgSatisfactionForEachAP(std::vector<std::vector<int>> &serving_UE, std::vector<double> &satisfaction, std::vector<double> &avg_satisfaction_per_AP)
-{
-    for (int AP_idx = 0; AP_idx < RF_AP_num + VLC_AP_num; AP_idx++) {
-        double average = 0.0;
-
-        for (int i = 0; i < serving_UE[AP_idx].size(); i++) {
-            average += satisfaction[serving_UE[AP_idx][i]];
-        }
-        average /= serving_UE[AP_idx].size();
-
-        avg_satisfaction_per_AP[AP_idx] = average;
-    }
-}
-
 void makeUpResourceDifference(double discount_ratio,
                                 std::vector<std::vector<double>> &VLC_data_rate_matrix,
                                 std::vector<double> &throughput,
@@ -739,7 +736,7 @@ void makeUpResourceDifference(double discount_ratio,
     if (first_empty_RU_position.first < 1 || target_UE.empty())
         return;
 
-    // step1: sort target_UE based on diff
+    // step1: sort target_UE based on the amount of resource having to make up
     std::vector<std::pair<int, double>> vec; // <UE_idx, demand - throughput>
     vec.reserve(target_UE.size());
 
@@ -781,24 +778,26 @@ void allocateResourceEqually(std::vector<std::vector<double>> &VLC_data_rate_mat
     std::sort(serving_UE.begin(), serving_UE.end(), [&](const int UE_a, const int UE_b){return VLC_data_rate_matrix[UE_a][1] < VLC_data_rate_matrix[UE_b][1];});
 
     int best_UE = serving_UE.back();
-    double avg_additional_resource = 0.0;
+    double total_additional_resource = 0.0;
 
     for (int i = 1; i < effective_subcarrier_num + 1; i++) {
         for (int j = 0; j < time_slot_num; j++) {
-            avg_additional_resource += (1 - RU_matrix[i][j]) * VLC_data_rate_matrix[best_UE][i];
+            total_additional_resource += (1 - RU_matrix[i][j]) * VLC_data_rate_matrix[best_UE][i];
         }
     }
 
-    avg_additional_resource /= serving_UE.size();
-
-    double estimated_additional_gained = avg_additional_resource;
+    double estimated_additional_gained = total_additional_resource / serving_UE.size();
     for (int i = 0; i < serving_UE.size(); i++) {
         int UE_idx = serving_UE[i];
         double actual_additional_gained = resourceAllocation(VLC_data_rate_matrix[UE_idx], RU_matrix, first_empty_RU_position, estimated_additional_gained, my_UE_list[UE_idx]);;
 
         throughput[UE_idx] += actual_additional_gained;
-        // the next user would have (base + the resource that was not allocated to the last user) resource at most
-        estimated_additional_gained = avg_additional_resource + (estimated_additional_gained - actual_additional_gained);
+
+        // resource that the next user would have is the average of total_additional_resource over the rest of users
+        total_additional_resource -= actual_additional_gained;
+
+        if (i != serving_UE.size()-1)
+            estimated_additional_gained = total_additional_resource / (serving_UE.size()-i-1);
     }
 
     updateSatisfaction(serving_UE, throughput, satisfaction, my_UE_list);
@@ -810,6 +809,20 @@ void updateSatisfaction(std::vector<int> &serving_UE, std::vector<double> &throu
         int UE_idx = serving_UE[i];
 
         satisfaction[UE_idx] = std::min(throughput[UE_idx] / my_UE_list[UE_idx].getRequiredDataRate(), 1.0);
+    }
+}
+
+void calculateAvgSatisfactionForEachAP(std::vector<std::vector<int>> &serving_UE, std::vector<double> &satisfaction, std::vector<double> &avg_satisfaction_per_AP)
+{
+    for (int AP_idx = 0; AP_idx < RF_AP_num + VLC_AP_num; AP_idx++) {
+        double average = 0.0;
+
+        for (int i = 0; i < serving_UE[AP_idx].size(); i++) {
+            average += satisfaction[serving_UE[AP_idx][i]];
+        }
+        average /= serving_UE[AP_idx].size();
+
+        avg_satisfaction_per_AP[AP_idx] = average;
     }
 }
 
@@ -828,7 +841,7 @@ int findFirstEffectiveSubcarrier(std::vector<double> &VLC_data_rate_matrix, int 
     return update_flag;
 }
 
-void backToLastRU(int &subcarrier_idx, int &time_slot_idx)
+void goToPrevRU(int &subcarrier_idx, int &time_slot_idx)
 {
     if (time_slot_idx == time_slot_num - 1) {
             subcarrier_idx++;

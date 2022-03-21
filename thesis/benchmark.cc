@@ -81,6 +81,7 @@ void benchmarkDynamicLB(int &state,
 #if DEBUG_MODE
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
 
+    /*
     for (int i = 0; i < my_UE_list.size(); i++) {
         std::cout << "History (per state) data rate of UE id: " << my_UE_list[i].getID() << std::endl;
         std::vector<double> history = my_UE_list[i].getThroughputHistory();
@@ -89,7 +90,7 @@ void benchmarkDynamicLB(int &state,
             std::cout << history[j] << " ";
         std::cout << std::endl;
     }
-    std::cout<<std::endl;
+    std::cout<<std::endl;*/
 #endif // DEBUG_MODE
 }
 
