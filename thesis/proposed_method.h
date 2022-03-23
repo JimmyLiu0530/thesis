@@ -25,8 +25,7 @@ void proposedDynamicLB (int &state,
                        std::vector<double> &avg_satisfaction_per_AP,
                        std::vector<MyUeNode> &my_UE_list);
 
-
-void completeConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+ void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                              std::vector<double> &RF_data_rate_vector,
                              std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                              std::vector<std::vector<int>> &AP_association_matrix,
@@ -37,7 +36,8 @@ void completeConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SI
                              std::vector<double> &avg_satisfaction_per_AP,
                              std::vector<MyUeNode> &my_UE_list);
 
-void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+
+void completeConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                              std::vector<double> &RF_data_rate_vector,
                              std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                              std::vector<std::vector<int>> &AP_association_matrix,
@@ -79,22 +79,12 @@ void residualResourceAllocation(double &discount_ratio,
                                 std::vector<std::vector<int>> &RU_matrix,
                                 std::vector<MyUeNode> &my_UE_list);
 
-void takeResourceBack(double discount_ratio,
-                        std::vector<std::vector<double>> &VLC_data_rate_matrix,
-                        std::vector<double> &throughput,
-                        std::vector<double> &satisfaction,
-                        std::vector<int> &serving_UE,
+void takeResourceBack(std::vector<double> &VLC_data_rate_matrix,
                         std::pair<int, int> &first_empty_RU_position,
                         std::vector<std::vector<int>> &RU_matrix,
-                        std::vector<MyUeNode> &my_UE_list);
-
-void releaseResource(std::vector<std::vector<int>> &RU_matrix,
-                      std::pair<int, int> &first_empty_RU_position,
-                      MyUeNode &UE_node);
-
-void updateInfoToMyUeList(std::vector<double> &throughput,
-                          std::vector<double> &satisfaction,
-                          std::vector<MyUeNode> &my_UE_list);
+                        double resource_return,
+                        double &throughput,
+                        MyUeNode &UE_node);
 
 
 void makeUpResourceDifference(double discount_ratio,
@@ -114,14 +104,23 @@ void allocateResourceEqually(std::vector<std::vector<double>> &VLC_data_rate_mat
                                 std::vector<std::vector<int>> &RU_matrix,
                                 std::vector<MyUeNode> &my_UE_list);
 
-void updateSatisfaction(std::vector<int> &serving_UE, std::vector<double> &throughput, std::vector<double> &satisfaction, std::vector<MyUeNode> &my_UE_list);
+void updateOneSatisfaction(double throughput, double &satisfaction, MyUeNode &UE_node);
+
+void updateAllSatisfaction(std::vector<int> &serving_UE, std::vector<double> &throughput, std::vector<double> &satisfaction, std::vector<MyUeNode> &my_UE_list);
 
 void calculateAvgSatisfactionForEachAP(std::vector<std::vector<int>> &serving_UE, std::vector<double> &satisfaction, std::vector<double> &avg_satisfaction_per_AP);
+
+void releaseResource(std::vector<std::vector<int>> &RU_matrix, std::pair<int, int> &first_empty_RU_position, MyUeNode &UE_node);
 
 int findFirstEffectiveSubcarrier(std::vector<double> &VLC_data_rate_matrix, int &subcarrier_idx, int &time_slot_idx);
 
 void goToPrevRU(int &subcarrier_idx, int &time_slot_idx);
 
 void goToNextRU(int &subcarrier_idx, int &time_slot_idx);
+
+void updateInfoToMyUeList(std::vector<double> &throughput,
+                          std::vector<double> &satisfaction,
+                          std::vector<MyUeNode> &my_UE_list);
+
 
 #endif // PROPOSED_METHOD_H

@@ -208,8 +208,9 @@ std::vector<RuRangeType> MyUeNode::getWholeRuBlock(void) {
 }
 
 void MyUeNode::arrangeRuBlock(void) {
-    std::sort(RU_block.begin(), RU_block.end(), [](RuRangeType &a, RuRangeType& b){
-                                                return ( (a.first.first > b.first.first) || (a.first.first == b.first.first && a.first.second > b.first.second) );});
+    if (!RU_block.empty())
+        std::sort(RU_block.begin(), RU_block.end(), [](RuRangeType &a, RuRangeType& b){
+                                                        return ( (a.first.first > b.first.first) || (a.first.first == b.first.first && a.first.second > b.first.second) );});
 }
 
 
