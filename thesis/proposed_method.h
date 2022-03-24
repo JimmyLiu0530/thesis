@@ -11,42 +11,43 @@
 
 
 void proposedDynamicLB (int &state,
-                       NodeContainer &RF_AP_node,
-                       NodeContainer &VLC_AP_nodes,
-                       NodeContainer &UE_nodes,
-                       std::vector<std::vector<double>> &VLC_LOS_matrix,
-                       std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
-                       std::vector<double> &RF_data_rate_vector,
-                       std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                       std::vector<std::vector<int>> &AP_association_matrix,
-                       std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                       std::vector<double> &demand_discount_per_AP,
-                       std::vector<std::pair<int, int>> &first_empty_RU_position,
-                       std::vector<double> &avg_satisfaction_per_AP,
-                       std::vector<MyUeNode> &my_UE_list);
+                           NodeContainer &RF_AP_node,
+                           NodeContainer &VLC_AP_nodes,
+                           NodeContainer &UE_nodes,
+                           std::vector<std::vector<double>> &VLC_LOS_matrix,
+                           std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+                           std::vector<double> &RF_data_rate_vector,
+                           std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                           std::vector<std::vector<int>> &AP_association_matrix,
+                           std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
+                           std::vector<double> &demand_discount_per_AP,
+                           std::vector<std::pair<int, int>> &first_empty_RU_position,
+                           std::vector<double> &avg_satisfaction_per_AP,
+                           std::vector<MyUeNode> &my_UE_list);
 
- void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
-                             std::vector<double> &RF_data_rate_vector,
-                             std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                             std::vector<std::vector<int>> &AP_association_matrix,
-                             std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                             std::vector<int> &rejected_UE,
-                             std::vector<double> &demand_discount_per_AP,
-                             std::vector<std::pair<int, int>> &first_empty_RU_position,
-                             std::vector<double> &avg_satisfaction_per_AP,
-                             std::vector<MyUeNode> &my_UE_list);
+
+void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+                         std::vector<double> &RF_data_rate_vector,
+                         std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                         std::vector<std::vector<int>> &AP_association_matrix,
+                         std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
+                         std::vector<int> &rejected_UE,
+                         std::vector<double> &demand_discount_per_AP,
+                         std::vector<std::pair<int, int>> &first_empty_RU_position,
+                         std::vector<double> &avg_satisfaction_per_AP,
+                         std::vector<MyUeNode> &my_UE_list);
 
 
 void completeConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
-                             std::vector<double> &RF_data_rate_vector,
-                             std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                             std::vector<std::vector<int>> &AP_association_matrix,
-                             std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                             std::vector<int> &rejected_UE,
-                             std::vector<double> &demand_discount_per_AP,
-                             std::vector<std::pair<int, int>> &first_empty_RU_position,
-                             std::vector<double> &avg_satisfaction_per_AP,
-                             std::vector<MyUeNode> &my_UE_list);
+                         std::vector<double> &RF_data_rate_vector,
+                         std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                         std::vector<std::vector<int>> &AP_association_matrix,
+                         std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
+                         std::vector<int> &rejected_UE,
+                         std::vector<double> &demand_discount_per_AP,
+                         std::vector<std::pair<int, int>> &first_empty_RU_position,
+                         std::vector<double> &avg_satisfaction_per_AP,
+                         std::vector<MyUeNode> &my_UE_list);
 
 void findBestSinrAP(std::vector<int> &best_SINR_AP,
                     std::vector<std::unordered_set<int>> &unallocated_UE_under_best_VLC_AP,
@@ -68,7 +69,6 @@ double resourceAllocation(std::vector<double> &VLC_data_rate_matrix,
                             std::pair<int, int> &first_empty_RU_position,
                             double offered_data_rate,
                             MyUeNode &UE_node);
-
 
 void residualResourceAllocation(double &discount_ratio,
                                 std::vector<std::vector<double>> &VLC_data_rate_matrix,

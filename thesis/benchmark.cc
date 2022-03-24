@@ -68,6 +68,7 @@ void benchmarkDynamicLB(int &state,
     updateApAssociationResult(local_AP_association_matrix, AP_association_matrix, my_UE_list);
     updateResourceAllocationResult(throughtput_per_iteration, my_UE_list);
 
+#if DEBUG_MODE
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
     for (int i = 0; i < UE_num; i++) {
         std::cout << "Data rate (per iteration) of UE " << i << std::endl;
@@ -75,10 +76,14 @@ void benchmarkDynamicLB(int &state,
             std::cout << throughtput_per_iteration[i][j] << " ";
         }
         std::cout << std::endl;
+
+        std::cout <<"demand of UE " << i <<": " << my_UE_list[i].getRequiredDataRate() << std::endl;
+        std::cout <<"Satisfaction of UE " << i <<": " << my_UE_list[i].getLastSatisfaction() << std::endl << std::endl;
     }
+    std::cout << std::endl;
 
 
-#if DEBUG_MODE
+
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
 
     /*
@@ -374,10 +379,7 @@ void updateResourceAllocationResult(std::vector<std::vector<double>> &throughtpu
 {
     for (int i = 0; i < my_UE_list.size(); i++) {
         double curr_throughput = throughtput_per_iteration[i].back();
-        double curr_satisfaction = curr_throughput / my_UE_list[i].getRequiredDataRate();
-
-        if (curr_satisfaction > 1.0)
-            curr_satisfaction = 1.0;
+        double curr_satisfaction = std::min(curr_throughput / my_UE_list[i].getRequiredDataRate(), 1.0);
 
         my_UE_list[i].addThroughput(curr_throughput);
         my_UE_list[i].addSatisfaction(curr_satisfaction);

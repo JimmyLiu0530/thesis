@@ -13,11 +13,11 @@ const double room_size = 16;
 const int RF_AP_num = 1;
 const int VLC_AP_num = 16;
 const int VLC_AP_per_row = 4;
-const int UE_num = 50;
-const double time_period = 0.5; // s
+const int UE_num = 100;
+const double time_period = 0.5; // sec
 const double avg_speed = 1.0;
 const double pause_time = 0.0;
-const int state_num = 20;
+const int state_num = 50;
 
 
 /*
@@ -113,6 +113,6 @@ const double min_discount_ratio = 0.6;
 /*
     the period of the complete configuration (in states)
 */
-const int complete_config_period = 5;
+const int complete_config_period = 10;
 
 #endif // GLOBAL_CONFIGURATION_H
