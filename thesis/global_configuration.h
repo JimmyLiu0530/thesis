@@ -4,7 +4,7 @@
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 #define PROPOSED_METHOD 1
 
 
@@ -113,6 +113,6 @@ const double min_discount_ratio = 0.6;
 /*
     the period of the complete configuration (in states)
 */
-const int complete_config_period = 10;
+const int complete_config_period = 100;
 
 #endif // GLOBAL_CONFIGURATION_H

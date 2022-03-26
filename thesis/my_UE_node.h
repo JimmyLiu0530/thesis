@@ -33,9 +33,6 @@ public:
 
     int getPrevAssociatedAP(void);
 
-    void setSINR(double in_SINR);
-    double getSINR(void);
-
     void addThroughput(double new_data_rate);
     double getLastThroughput(void);
     double calculateAvgThroughput(void);
@@ -72,7 +69,6 @@ private:
     // 0 indicates RF AP, and [1, VLC_AP_num] indicates VLC APs
     int prev_associated_AP;
     int curr_associated_AP;
-    double SINR;
     std::vector<double> throughput_per_state;
     std::vector<double> satisfaction_per_state;
 

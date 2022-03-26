@@ -1,7 +1,7 @@
 #ifndef PROPOSED_METHOD_H
 #define PROPOSED_METHOD_H
 
-# include <unordered_set>
+# include <vector>
 
 #include "my_UE_node.h"
 #include "ns3/core-module.h"
@@ -20,9 +20,8 @@ void proposedDynamicLB (int &state,
                            std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                            std::vector<std::vector<int>> &AP_association_matrix,
                            std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                           std::vector<double> &demand_discount_per_AP,
+                           std::vector<double> &discount_ratio_per_AP,
                            std::vector<std::pair<int, int>> &first_empty_RU_position,
-                           std::vector<double> &avg_satisfaction_per_AP,
                            std::vector<MyUeNode> &my_UE_list);
 
 
@@ -32,35 +31,34 @@ void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SIN
                          std::vector<std::vector<int>> &AP_association_matrix,
                          std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
                          std::vector<int> &rejected_UE,
-                         std::vector<double> &demand_discount_per_AP,
+                         std::vector<double> &discount_ratio_per_AP,
                          std::vector<std::pair<int, int>> &first_empty_RU_position,
-                         std::vector<double> &avg_satisfaction_per_AP,
                          std::vector<MyUeNode> &my_UE_list);
 
 
-void completeConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+void fullConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                          std::vector<double> &RF_data_rate_vector,
                          std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                          std::vector<std::vector<int>> &AP_association_matrix,
                          std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
                          std::vector<int> &rejected_UE,
-                         std::vector<double> &demand_discount_per_AP,
+                         std::vector<double> &discount_ratio_per_AP,
                          std::vector<std::pair<int, int>> &first_empty_RU_position,
-                         std::vector<double> &avg_satisfaction_per_AP,
                          std::vector<MyUeNode> &my_UE_list);
 
 void findBestSinrAP(std::vector<int> &best_SINR_AP,
-                    std::vector<std::unordered_set<int>> &unallocated_UE_under_best_VLC_AP,
                     std::vector<int> &served_by_RF,
+                    std::vector<double> &UE_demand,
+                    std::vector<std::vector<int>> &unallocated_UE_under_best_VLC_AP,
                     std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix);
 
 std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                                                 std::vector<double> &RF_data_rate_vector,
                                                 std::vector<int> &served_by_RF,
                                                 std::vector<std::vector<std::vector<int>>> RU_matrix_per_VLC_AP,
-                                                std::vector<std::unordered_set<int>> &unallocated_UE_under_best_VLC_AP,
+                                                std::vector<std::vector<int>> &unallocated_UE_under_best_VLC_AP,
                                                 std::vector<double> &UE_demand,
-                                                std::vector<double> &demand_discount_per_AP,
+                                                std::vector<double> &discount_ratio_per_AP,
                                                 std::vector<std::pair<int, int>> first_empty_RU_position,
                                                 MyUeNode &UE_node);
 
@@ -79,14 +77,6 @@ void residualResourceAllocation(double &discount_ratio,
                                 std::vector<std::vector<int>> &RU_matrix,
                                 std::vector<MyUeNode> &my_UE_list);
 
-void takeResourceBack(std::vector<double> &VLC_data_rate_matrix,
-                        std::pair<int, int> &first_empty_RU_position,
-                        std::vector<std::vector<int>> &RU_matrix,
-                        double resource_return,
-                        double &throughput,
-                        MyUeNode &UE_node);
-
-
 void makeUpResourceDifference(double discount_ratio,
                               std::vector<std::vector<double>> &VLC_data_rate_matrix,
                               std::vector<double> &throughput,
@@ -95,6 +85,13 @@ void makeUpResourceDifference(double discount_ratio,
                               std::pair<int, int> &first_empty_RU_position,
                               std::vector<std::vector<int>> &RU_matrix,
                               std::vector<MyUeNode> &my_UE_list);
+
+void takeResourceBack(std::vector<double> &VLC_data_rate_matrix,
+                        std::pair<int, int> &first_empty_RU_position,
+                        std::vector<std::vector<int>> &RU_matrix,
+                        double resource_return,
+                        double &throughput,
+                        MyUeNode &UE_node);
 
 void allocateResourceEqually(std::vector<std::vector<double>> &VLC_data_rate_matrix,
                                 std::vector<double> &throughput,
@@ -107,8 +104,6 @@ void allocateResourceEqually(std::vector<std::vector<double>> &VLC_data_rate_mat
 void updateOneSatisfaction(double throughput, double &satisfaction, MyUeNode &UE_node);
 
 void updateAllSatisfaction(std::vector<int> &serving_UE, std::vector<double> &throughput, std::vector<double> &satisfaction, std::vector<MyUeNode> &my_UE_list);
-
-void calculateAvgSatisfactionForEachAP(std::vector<std::vector<int>> &serving_UE, std::vector<double> &satisfaction, std::vector<double> &avg_satisfaction_per_AP);
 
 void releaseResource(std::vector<std::vector<int>> &RU_matrix, std::pair<int, int> &first_empty_RU_position, MyUeNode &UE_node);
 

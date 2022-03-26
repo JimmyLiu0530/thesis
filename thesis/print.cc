@@ -134,7 +134,7 @@ void printVlcApPosition(ns3::NodeContainer &VLC_AP_nodes) {
 }
 
 void printUePosition(ns3::NodeContainer &UE_nodes) {
-    int UE_index = 1;
+    int UE_index = 0;
 
     std::fstream output;
     output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/UE_position.csv", std::ios::out | std::ios::app);
@@ -175,7 +175,7 @@ void printResourceUnitMatrix(std::vector<std::vector<std::vector<int>>> &resourc
 
     for (int i = 0; i < resource_unit_matrix[VLC_AP_index].size(); i++) {
         for (int j = 0; j < resource_unit_matrix[VLC_AP_index][i].size(); j++) {
-            std::cout << resource_unit_matrix[VLC_AP_index][i][j] << " ";
+            std::cout << std::setw(4) << resource_unit_matrix[VLC_AP_index][i][j] << " ";
         }
         std::cout << std::endl;
     }

@@ -57,8 +57,8 @@ NS_LOG_COMPONENT_DEFINE ("TcpLargeTransfer");
 std::vector<double> Received(1, 0.0);
 std::vector<double> theTime(1, 0.0);
 
-std::vector<double> demand_discount_per_AP(RF_AP_num + VLC_AP_num, 0.8);
-std::vector<double> avg_satisfaction_per_AP(RF_AP_num + VLC_AP_num, 0.0);
+std::vector<double> discount_ratio_per_AP(RF_AP_num + VLC_AP_num, 0.8);
+// std::vector<double> avg_satisfaction_per_AP(RF_AP_num + VLC_AP_num, 0.0);
 std::vector<std::vector<int>> AP_association_matrix(RF_AP_num + VLC_AP_num, std::vector<int> (UE_num, 0));
 
 
@@ -129,13 +129,13 @@ void updateToNextState(NodeContainer &RF_AP_node,
 
     proposedDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix, VLC_SINR_matrix, RF_data_rate_vector,
                       VLC_data_rate_matrix, AP_association_matrix, RU_matrix_per_VLC_AP,
-                      demand_discount_per_AP, first_empty_RU_position, avg_satisfaction_per_AP, my_UE_list);
+                      discount_ratio_per_AP, first_empty_RU_position, my_UE_list);
 
 #else
 
     benchmarkDynamicLB(state, RF_AP_node, VLC_AP_nodes, UE_nodes, VLC_LOS_matrix,
                         VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix,
-                        AP_association_matrix, avg_satisfaction_per_AP, my_UE_list);
+                        AP_association_matrix, my_UE_list);
 
 #endif
 

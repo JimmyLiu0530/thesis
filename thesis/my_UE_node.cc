@@ -26,7 +26,7 @@ MyUeNode::MyUeNode(int node_ID, Vector pos, double required_data_rate)
         azimuth_angle = 0.0;
         prev_associated_AP = -1;
         curr_associated_AP = -1;
-        SINR = 0.0;
+        RU_block.clear();
     }
 
 int MyUeNode::getID(void) {
@@ -60,14 +60,6 @@ int MyUeNode::getCurrAssociatedAP(void) {
 
 int MyUeNode::getPrevAssociatedAP(void) {
     return prev_associated_AP;
-}
-
-void MyUeNode::setSINR(double in_SINR) {
-    SINR = in_SINR;
-}
-
-double MyUeNode::getSINR(void) {
-    return SINR;
 }
 
 void MyUeNode::addThroughput(double new_data_rate) {
@@ -204,7 +196,10 @@ void MyUeNode::clearRuBlock(void) {
 }
 
 std::vector<RuRangeType> MyUeNode::getWholeRuBlock(void) {
-    return RU_block;
+    if (!RU_block.empty())
+        return RU_block;
+
+    return std::vector<RuRangeType> ();
 }
 
 void MyUeNode::arrangeRuBlock(void) {
