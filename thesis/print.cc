@@ -115,7 +115,7 @@ void printVlcApPosition(ns3::NodeContainer &VLC_AP_nodes) {
     int VLC_AP_index = 1;
 
     std::fstream output;
-    output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/UE_position.csv", std::ios::out | std::ios::trunc);
+    output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/VLC_AP_position.csv", std::ios::out | std::ios::trunc);
     if (!output.is_open()) {
         std::cout << "Fail to open file\n";
     }
@@ -137,9 +137,10 @@ void printUePosition(ns3::NodeContainer &UE_nodes) {
     int UE_index = 0;
 
     std::fstream output;
-    output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/UE_position.csv", std::ios::out | std::ios::app);
+    output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/UE_position.csv", std::ios::out | std::ios::trunc);
     if (!output.is_open()) {
         std::cout << "Fail to open file\n";
+        exit(EXIT_FAILURE);
     }
 
 
@@ -151,6 +152,29 @@ void printUePosition(ns3::NodeContainer &UE_nodes) {
         output << std::endl;
 
         std::cout << "Position of UE " << UE_index++ << " =(" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
+    }
+
+    output << std::endl;
+
+    std::cout << std::endl;
+}
+
+void printUePosition(std::vector<MyUeNode> &my_UE_list) {
+
+    std::fstream output;
+    output.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/UE_position.csv", std::ios::out | std::ios::trunc);
+    if (!output.is_open()) {
+        std::cout << "Fail to open file\n";
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < my_UE_list.size(); i++) {
+        Vector pos = my_UE_list[i].getPosition();
+
+        output << pos.x << "," << pos.y << ",";
+        output << std::endl;
+
+        std::cout << "Position of UE " << my_UE_list[i].getID() << " =(" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
     }
 
     output << std::endl;

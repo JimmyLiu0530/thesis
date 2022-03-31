@@ -30,7 +30,6 @@ public:
 
     void setCurrAssociatedAP(int associated_AP_index);
     int getCurrAssociatedAP(void);
-
     int getPrevAssociatedAP(void);
 
     void addThroughput(double new_data_rate);
@@ -38,10 +37,10 @@ public:
     double calculateAvgThroughput(void);
     std::vector<double> getThroughputHistory(void);
 
-    void addSatisfaction(double satis_level);
-    std::vector<double> getSatisfactionHistory(void);
+    void addSatisfaction(double new_satis);
     double getLastSatisfaction(void);
     double calculateAvgSatisfaction(void);
+    std::vector<double> getSatisfactionHistory(void);
 
     double getPolarAngle(void);
     double getAzimuthAngle(void);

@@ -41,7 +41,6 @@ void fullConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_m
                          std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                          std::vector<std::vector<int>> &AP_association_matrix,
                          std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                         std::vector<int> &rejected_UE,
                          std::vector<double> &discount_ratio_per_AP,
                          std::vector<std::pair<int, int>> &first_empty_RU_position,
                          std::vector<MyUeNode> &my_UE_list);
@@ -52,13 +51,13 @@ void findBestSinrAP(std::vector<int> &best_SINR_AP,
                     std::vector<std::vector<int>> &unallocated_UE_under_best_VLC_AP,
                     std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix);
 
+
 std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                                                 std::vector<double> &RF_data_rate_vector,
                                                 std::vector<int> &served_by_RF,
                                                 std::vector<std::vector<std::vector<int>>> RU_matrix_per_VLC_AP,
-                                                std::vector<std::vector<int>> &unallocated_UE_under_best_VLC_AP,
                                                 std::vector<double> &UE_demand,
-                                                std::vector<double> &discount_ratio_per_AP,
+                                                std::vector<double> &demand_discount_per_AP,
                                                 std::vector<std::pair<int, int>> first_empty_RU_position,
                                                 MyUeNode &UE_node);
 
@@ -107,7 +106,11 @@ void updateAllSatisfaction(std::vector<int> &serving_UE, std::vector<double> &th
 
 void releaseResource(std::vector<std::vector<int>> &RU_matrix, std::pair<int, int> &first_empty_RU_position, MyUeNode &UE_node);
 
+void existDuplicateRU(std::vector<int> &serving_UE, std::vector<MyUeNode> &my_UE_list);
+
 int findFirstEffectiveSubcarrier(std::vector<double> &VLC_data_rate_matrix, int &subcarrier_idx, int &time_slot_idx);
+
+double recalculateRuDataRate(std::vector<double> &VLC_data_rate_matrix, MyUeNode &UE_node);
 
 void goToPrevRU(int &subcarrier_idx, int &time_slot_idx);
 

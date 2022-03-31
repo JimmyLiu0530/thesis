@@ -107,7 +107,7 @@ double getCosineOfIncidenceAngle(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_no
 
     Ptr<MobilityModel> UE_mobility = UE->GetObject<MobilityModel>();
     Vector UE_curr_pos = UE_mobility->GetPosition();
-    UE_node.setPosition(UE_curr_pos);
+    UE_node.setPosition(UE_curr_pos); // here is the first time in this state to access the position of the user, so have to update for usage of other functions
 
     double dx = AP_pos.x - UE_curr_pos.x;
     double dy = AP_pos.y - UE_curr_pos.y;

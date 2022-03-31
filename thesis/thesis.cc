@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <string>
+#include <stdlib.h>
 
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
@@ -77,6 +78,7 @@ std::vector<double> recorded_avg_throughput_per_state(state_num, 0.0); // in Mbp
 std::vector<double> recorded_avg_satisfaction_per_state(state_num, 0.0);
 std::vector<double> recorded_satisfaction_fairness_per_state(state_num, 0.0);
 std::vector<double> recorded_throughput_fairness_per_state(state_num, 0.0);
+std::vector<double> recorded_variance_of_satisfaction(state_num, 0.0);
 
 
 
@@ -140,7 +142,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
 #endif
 
     // since we would adjust the order of my_UE_list during APA&RA, we have to reorder it back after the end of each state
-    std::sort(my_UE_list.begin(), my_UE_list.end(), [](MyUeNode a, MyUeNode b){return a.getID() < b.getID();});
+    std::sort(my_UE_list.begin(), my_UE_list.end(), [](MyUeNode a, MyUeNode b){ return a.getID() < b.getID(); });
 
 
     // 1. calculate the number of UE connected to the RF AP
@@ -193,6 +195,14 @@ void updateToNextState(NodeContainer &RF_AP_node,
     throughput_fairness = square_of_sum / (UE_num * sum_of_square);
 
 
+    // 5. calculate the variance of satisfaction
+    double var = 0.0;
+    for (int i = 0; i < UE_num; i++) {
+        var += std::pow((my_UE_list[i].getLastSatisfaction() - avg_satisfaction), 2);
+    }
+    var = var / UE_num;
+
+
 #if DEBUG_MODE
     std::cout << "state " << state << std::endl;
     std::cout << "avg data rate: " << avg_data_rate << ", ";
@@ -202,13 +212,41 @@ void updateToNextState(NodeContainer &RF_AP_node,
     std::cout << "RF connection ratio: " << (double)cnt / UE_num * 100 << "%" << std::endl << std::endl;
 #endif // DEBUG_MODE
 
-
     // use another storage to keep some information of each UE
     // since somehow get 0 when accessing these information through my_UE_list after Simulator::Run()
     recorded_avg_throughput_per_state[state] = avg_data_rate;
     recorded_avg_satisfaction_per_state[state] = avg_satisfaction;
     recorded_satisfaction_fairness_per_state[state] = satisfaction_fairness;
     recorded_throughput_fairness_per_state[state] = throughput_fairness;
+    recorded_variance_of_satisfaction[state] = var;
+
+//#if DEBUG_MODE
+    if (state == state_num - 1) {
+        std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/user_information/user_";
+
+        for (int i = 0; i < my_UE_list.size(); i++) {
+             std::fstream out;
+             out.open(path + std::to_string(i) + ".csv", std::ios::out | std::ios::app);
+
+            if (!out.is_open()) {
+                std::cout << "Fail to open file\n";
+                exit(EXIT_FAILURE);
+            }
+            else {
+                double demand = my_UE_list[i].getRequiredDataRate();
+                std::vector<double> throughput = my_UE_list[i].getThroughputHistory();
+                std::vector<double> satisfaction = my_UE_list[i].getSatisfactionHistory();
+
+                for (int j = 0; j < throughput.size(); j++) {
+                    out << throughput[j] << "," << demand << "," << satisfaction[j] << ",";
+                    out << std::endl;
+                }
+            }
+
+            out.close();
+        }
+    }
+//#endif // DEBUG_MODE
 
     state++;
 
@@ -380,17 +418,21 @@ int main(int argc, char *argv[])
     double avg_satisfaction = 0.0;
     double avg_satisfaction_fairness = 0.0;
     double avg_throughput_fairness = 0.0;
+    double avg_var = 0.0;
 
     for (int i = 0; i < state_num; i++) {
         avg_throughput += recorded_avg_throughput_per_state[i];
         avg_satisfaction += recorded_avg_satisfaction_per_state[i];
         avg_satisfaction_fairness += recorded_satisfaction_fairness_per_state[i];
         avg_throughput_fairness += recorded_throughput_fairness_per_state[i];
+        avg_var += recorded_variance_of_satisfaction[i];
     }
+
     avg_throughput = avg_throughput / state_num;
     avg_satisfaction = avg_satisfaction / state_num;
     avg_satisfaction_fairness = avg_satisfaction_fairness / state_num;
     avg_throughput_fairness = avg_throughput_fairness / state_num;
+    avg_var = avg_var / state_num;
 
 
     // average percentage of WiFi connections
@@ -401,11 +443,12 @@ int main(int argc, char *argv[])
     avg_RF_connection_ratio /= RF_cnt.size();
 
 
-    std::cout << "In this experiment, ";
+    std::cout << "In this simulation, ";
     std::cout << "avg. throughput: " << avg_throughput << " Mbps, ";
     std::cout << "avg. satisfaction: " << avg_satisfaction << ", ";
     std::cout << "satisfaction fairness: " << avg_satisfaction_fairness << ", ";
-    std::cout << "throughput fairness: " << avg_throughput_fairness << std::endl << std::endl;
+    std::cout << "throughput fairness: " << avg_throughput_fairness << ", ";
+    std::cout << "variance of satisfaction: " << avg_var << std::endl << std::endl;
     //::cout << "RF connection percentage: " << avg_RF_connection_ratio*100 << "%" << std::endl;
 
 
@@ -417,9 +460,10 @@ int main(int argc, char *argv[])
     output.open(path, std::ios::out | std::ios::app);
     if (!output.is_open()) {
         std::cout << "Fail to open file\n";
+        exit(EXIT_FAILURE);
     }
     else {
-        output << avg_throughput << "," << avg_satisfaction << "," << avg_satisfaction_fairness << "," << avg_throughput_fairness << ",";// << avg_RF_connection_ratio << ",";
+        output << avg_throughput << "," << avg_satisfaction << "," << avg_satisfaction_fairness << "," << avg_throughput_fairness << "," << avg_var << ",";// << avg_RF_connection_ratio << ",";
         output << std::endl;
     }
 

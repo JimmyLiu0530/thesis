@@ -67,8 +67,10 @@ void MyUeNode::addThroughput(double new_data_rate) {
 }
 
 double MyUeNode::getLastThroughput(void) {
-    if (throughput_per_state.empty())
+    if (throughput_per_state.empty()) {
+        std::cout << "user " << getID() << "'s throughput vector is empty\n";
         return 0.0;
+    }
 
     return throughput_per_state.back();
 }
@@ -86,11 +88,8 @@ std::vector<double> MyUeNode::getThroughputHistory(void) {
     return throughput_per_state;
 }
 
-void MyUeNode::addSatisfaction(double satis_level) {
-    satisfaction_per_state.push_back(satis_level);
-}
-std::vector<double> MyUeNode::getSatisfactionHistory(void) {
-    return satisfaction_per_state;
+void MyUeNode::addSatisfaction(double new_satis) {
+    satisfaction_per_state.push_back(new_satis);
 }
 
 double MyUeNode::getLastSatisfaction(void) {
@@ -110,6 +109,10 @@ double MyUeNode::calculateAvgSatisfaction(void) {
     }
 
     return satis_sum / satisfaction_per_state.size();
+}
+
+std::vector<double> MyUeNode::getSatisfactionHistory(void) {
+    return satisfaction_per_state;
 }
 
 void MyUeNode::setPolarAngle(double new_polar_angle) {
@@ -204,8 +207,8 @@ std::vector<RuRangeType> MyUeNode::getWholeRuBlock(void) {
 
 void MyUeNode::arrangeRuBlock(void) {
     if (!RU_block.empty())
-        std::sort(RU_block.begin(), RU_block.end(), [](RuRangeType &a, RuRangeType& b){
-                                                        return ( (a.first.first > b.first.first) || (a.first.first == b.first.first && a.first.second > b.first.second) );});
+        std::sort(RU_block.begin(), RU_block.end(),
+                  [](RuRangeType &a, RuRangeType& b){ return ((a.first.first > b.first.first) || (a.first.first == b.first.first && a.first.second > b.first.second)); });
 }
 
 
