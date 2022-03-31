@@ -10,7 +10,7 @@
 
 
 
-void proposedDynamicLB (int &state,
+void proposedDynamicLB (int state,
                            NodeContainer &RF_AP_node,
                            NodeContainer &VLC_AP_nodes,
                            NodeContainer &UE_nodes,
@@ -30,7 +30,6 @@ void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SIN
                          std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                          std::vector<std::vector<int>> &AP_association_matrix,
                          std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                         std::vector<int> &rejected_UE,
                          std::vector<double> &discount_ratio_per_AP,
                          std::vector<std::pair<int, int>> &first_empty_RU_position,
                          std::vector<MyUeNode> &my_UE_list);
@@ -104,7 +103,7 @@ void updateOneSatisfaction(double throughput, double &satisfaction, MyUeNode &UE
 
 void updateAllSatisfaction(std::vector<int> &serving_UE, std::vector<double> &throughput, std::vector<double> &satisfaction, std::vector<MyUeNode> &my_UE_list);
 
-void releaseResource(std::vector<std::vector<int>> &RU_matrix, std::pair<int, int> &first_empty_RU_position, MyUeNode &UE_node);
+void releaseAllResource(std::vector<std::vector<int>> &RU_matrix, std::pair<int, int> &first_empty_RU_position, MyUeNode &UE_node);
 
 void existDuplicateRU(std::vector<int> &serving_UE, std::vector<MyUeNode> &my_UE_list);
 
