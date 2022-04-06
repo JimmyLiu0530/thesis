@@ -25,7 +25,7 @@ void proposedDynamicLB (int state,
                            std::vector<MyUeNode> &my_UE_list);
 
 
-void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+void highPerformance(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                          std::vector<double> &RF_data_rate_vector,
                          std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                          std::vector<std::vector<int>> &AP_association_matrix,
@@ -35,7 +35,7 @@ void partialConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SIN
                          std::vector<MyUeNode> &my_UE_list);
 
 
-void fullConfiguration(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+void lowComplexity(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
                          std::vector<double> &RF_data_rate_vector,
                          std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                          std::vector<std::vector<int>> &AP_association_matrix,
@@ -109,7 +109,7 @@ void existDuplicateRU(std::vector<int> &serving_UE, std::vector<MyUeNode> &my_UE
 
 int findFirstEffectiveSubcarrier(std::vector<double> &VLC_data_rate_matrix, int &subcarrier_idx, int &time_slot_idx);
 
-double recalculateRuDataRate(std::vector<double> &VLC_data_rate_matrix, MyUeNode &UE_node);
+double recalculateRuDataRate(std::vector<double> &VLC_data_rate_matrix, std::vector<std::vector<int>> &RU_matrix, MyUeNode &UE_node);
 
 void goToPrevRU(int &subcarrier_idx, int &time_slot_idx);
 

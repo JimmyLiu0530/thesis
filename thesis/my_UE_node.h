@@ -49,6 +49,7 @@ public:
     void recordResourceUnit(std::pair<int,int> start, std::pair<int,int> tail);
     void updateNthResourceUnitBlock(int n, RuRangeType new_RU);
     RuRangeType getNthResourceUnitBlock(int n);
+    void removeNthResourceUnitBlock(int n);
     void removeLastResourceUnitBlock(void);
     size_t getRuBlockSize(void);
     void clearRuBlock(void);

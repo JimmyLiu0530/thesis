@@ -109,7 +109,7 @@ const double beta = 1.0; // fairness coefficient
 const double delta_p = 0.05;
 const double min_discount_ratio = 0.6;
 
-const double expel_ratio = 0.1;
+const double expel_ratio = 0.33;
 
 
 /*
