@@ -220,7 +220,8 @@ void updateToNextState(NodeContainer &RF_AP_node,
     recorded_throughput_fairness_per_state[state] = throughput_fairness;
     recorded_variance_of_satisfaction[state] = var;
 
-//#if DEBUG_MODE
+
+#if DEBUG_MODE
     if (state == state_num - 1) {
         std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/user_information/user_";
 
@@ -246,7 +247,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
             out.close();
         }
     }
-//#endif // DEBUG_MODE
+#endif // DEBUG_MODE
 
     state++;
 
@@ -443,13 +444,13 @@ int main(int argc, char *argv[])
     avg_RF_connection_ratio /= RF_cnt.size();
 
 
-    std::cout << "In this simulation, ";
-    std::cout << "avg. throughput: " << avg_throughput << " Mbps, ";
-    std::cout << "avg. satisfaction: " << avg_satisfaction << ", ";
-    std::cout << "satisfaction fairness: " << avg_satisfaction_fairness << ", ";
-    std::cout << "throughput fairness: " << avg_throughput_fairness << ", ";
-    std::cout << "variance of satisfaction: " << avg_var << std::endl << std::endl;
-    //::cout << "RF connection percentage: " << avg_RF_connection_ratio*100 << "%" << std::endl;
+    std::cout << "In this simulation, " << std::endl;
+    std::cout << "avg. throughput: " << avg_throughput << " Mbps" << std::endl;
+    std::cout << "avg. satisfaction: " << avg_satisfaction << std::endl;
+    std::cout << "satisfaction fairness: " << avg_satisfaction_fairness << std::endl;
+    std::cout << "throughput fairness: " << avg_throughput_fairness << std::endl;
+    std::cout << "variance of satisfaction: " << avg_var << std::endl;
+    std::cout << "RF connection percentage: " << avg_RF_connection_ratio*100 << "%" << std::endl << std::endl;
 
 
 
@@ -471,6 +472,7 @@ int main(int argc, char *argv[])
     output.close();
     Simulator::Destroy();
 }
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

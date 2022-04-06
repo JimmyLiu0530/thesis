@@ -190,6 +190,14 @@ RuRangeType MyUeNode::getNthResourceUnitBlock(int n) {
         std::cout << "Access to RU_block vector is out of bound\n";
 }
 
+void MyUeNode::removeNthResourceUnitBlock(int n) {
+    if (n < RU_block.size()) {
+        RU_block.erase(RU_block.begin() + n);
+    }
+    else
+        std::cout << "Access to RU_block vector is out of bound\n";
+}
+
 void MyUeNode::removeLastResourceUnitBlock(void) {
     RU_block.pop_back();
 }
