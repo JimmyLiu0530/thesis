@@ -30,7 +30,6 @@ void highPerformance(std::vector<std::vector<std::vector<double>>> &VLC_SINR_mat
                          std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                          std::vector<std::vector<int>> &AP_association_matrix,
                          std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                         std::vector<double> &discount_ratio_per_AP,
                          std::vector<std::pair<int, int>> &first_empty_RU_position,
                          std::vector<MyUeNode> &my_UE_list);
 

@@ -72,15 +72,11 @@ std::vector<std::vector<std::vector<double>>> VLC_SINR_matrix(VLC_AP_num, std::v
 std::vector<std::vector<std::vector<double>>> VLC_data_rate_matrix(VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
 std::vector<std::vector<std::vector<int>>> RU_matrix_per_VLC_AP(VLC_AP_num, std::vector<std::vector<int>> (effective_subcarrier_num+1, std::vector<int> (time_slot_num, 0)));
 
-
-
 std::vector<double> recorded_avg_throughput_per_state(state_num, 0.0); // in Mbps
 std::vector<double> recorded_avg_satisfaction_per_state(state_num, 0.0);
 std::vector<double> recorded_satisfaction_fairness_per_state(state_num, 0.0);
 std::vector<double> recorded_throughput_fairness_per_state(state_num, 0.0);
 std::vector<double> recorded_variance_of_satisfaction(state_num, 0.0);
-
-
 
 static const uint32_t totalTxBytes = 10000000;
 static uint32_t currentTxBytes = 0;
@@ -88,6 +84,7 @@ static const uint32_t writeSize = 1040;
 static int state = 0;
 uint8_t data[writeSize];
 std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output.csv";
+std::string user_info_path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/user_information/user_";
 
 
 void StartFlow(Ptr<Socket>, Ipv4Address, uint16_t);
@@ -212,6 +209,7 @@ void updateToNextState(NodeContainer &RF_AP_node,
     std::cout << "RF connection ratio: " << (double)cnt / UE_num * 100 << "%" << std::endl << std::endl;
 #endif // DEBUG_MODE
 
+
     // use another storage to keep some information of each UE
     // since somehow get 0 when accessing these information through my_UE_list after Simulator::Run()
     recorded_avg_throughput_per_state[state] = avg_data_rate;
@@ -221,32 +219,36 @@ void updateToNextState(NodeContainer &RF_AP_node,
     recorded_variance_of_satisfaction[state] = var;
 
 
-#if DEBUG_MODE
-    if (state == state_num - 1) {
-        std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/user_information/user_";
-
-        for (int i = 0; i < my_UE_list.size(); i++) {
-             std::fstream out;
-             out.open(path + std::to_string(i) + ".csv", std::ios::out | std::ios::app);
-
-            if (!out.is_open()) {
-                std::cout << "Fail to open file\n";
-                exit(EXIT_FAILURE);
-            }
-            else {
-                double demand = my_UE_list[i].getRequiredDataRate();
-                std::vector<double> throughput = my_UE_list[i].getThroughputHistory();
-                std::vector<double> satisfaction = my_UE_list[i].getSatisfactionHistory();
-
-                for (int j = 0; j < throughput.size(); j++) {
-                    out << throughput[j] << "," << demand << "," << satisfaction[j] << ",";
-                    out << std::endl;
-                }
-            }
-
-            out.close();
-        }
+    std::fstream out;
+    out.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output_per_state.csv", std::ios::out | std::ios::app);
+    if (!out.is_open()) {
+        std::cout << "Fail to open file\n";
+        exit(EXIT_FAILURE);
     }
+    else {
+        out << avg_data_rate << "," << avg_satisfaction << "," << satisfaction_fairness << "," << throughput_fairness << ",";
+        out << std::endl;
+    }
+    out.close();
+
+#if DEBUG_MODE
+
+    for (int i = 0; i < my_UE_list.size(); i++) {
+         std::fstream out;
+         out.open(user_info_path + std::to_string(i) + ".csv", std::ios::out | std::ios::app);
+
+        if (!out.is_open()) {
+            std::cout << "Fail to open file\n";
+            exit(EXIT_FAILURE);
+        }
+        else {
+            out << my_UE_list[i].getLastThroughput() << "," << my_UE_list[i].getLastSatisfaction() << "," << my_UE_list[i].getRequiredDataRate() << ",";
+            out << std::endl;
+        }
+
+        out.close();
+    }
+
 #endif // DEBUG_MODE
 
     state++;
@@ -307,6 +309,7 @@ int main(int argc, char *argv[])
 #if DEBUG_MODE
     printUePosition(UE_nodes);
 #endif
+
 
     std::vector<MyUeNode> my_UE_list = initializeMyUeNodeList(UE_nodes);
 
@@ -404,7 +407,7 @@ int main(int argc, char *argv[])
 
     Simulator::Schedule(Seconds(0.0), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
 
-    Simulator::Stop(Seconds(state_num * time_period)); // 1000 quasi-static states in total
+    Simulator::Stop(Seconds(state_num * time_period));
     Simulator::Run();
 
 
@@ -441,7 +444,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < RF_cnt.size(); i++)
         avg_RF_connection_ratio += ((double)RF_cnt[i] / UE_num);
 
-    avg_RF_connection_ratio /= RF_cnt.size();
+    avg_RF_connection_ratio = (avg_RF_connection_ratio / RF_cnt.size()) * 100;
 
 
     std::cout << "In this simulation, " << std::endl;
@@ -450,7 +453,7 @@ int main(int argc, char *argv[])
     std::cout << "satisfaction fairness: " << avg_satisfaction_fairness << std::endl;
     std::cout << "throughput fairness: " << avg_throughput_fairness << std::endl;
     std::cout << "variance of satisfaction: " << avg_var << std::endl;
-    std::cout << "RF connection percentage: " << avg_RF_connection_ratio*100 << "%" << std::endl << std::endl;
+    std::cout << "RF connection percentage: " << avg_RF_connection_ratio << "%" << std::endl << std::endl;
 
 
 

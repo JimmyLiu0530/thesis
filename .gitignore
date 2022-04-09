@@ -1,3 +1,2 @@
-thesis/output.csv
-thesis/UE_position.csv
+thesis/*.csv
 thesis/user_information

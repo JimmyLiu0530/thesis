@@ -4,7 +4,7 @@
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 #define PROPOSED_METHOD 1
 
 
@@ -107,9 +107,9 @@ const double beta = 1.0; // fairness coefficient
     parameters related to demand discounting ratio
 */
 const double delta_p = 0.05;
-const double min_discount_ratio = 0.6;
+// const double min_discount_ratio = 0.6;
 
-const double expel_ratio = 0.33;
+const double expel_ratio = 0.5;
 
 
 /*

@@ -206,6 +206,18 @@ void printResourceUnitMatrix(std::vector<std::vector<std::vector<int>>> &resourc
     std::cout << std::endl;
 }
 
+void printResourceUnitMatrix(std::vector<std::vector<int>> &RU_matrix) {
+    std::cout << "RU Matrix: " << std::endl;
+
+    for (int i = 0; i < RU_matrix.size(); i++) {
+        for (int j = 0; j < RU_matrix[i].size(); j++) {
+            std::cout << std::setw(4) << RU_matrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
 void printBlockedUE(std::vector<int> &blocked_UE) {
     std::cout << "Blocked UE as below: " << std::endl;
 
