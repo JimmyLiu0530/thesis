@@ -29,5 +29,7 @@ void printMyUeList(std::vector<MyUeNode> &my_UE_list);
 
 void printResourceUnitMatrix(std::vector<std::vector<std::vector<int>>> &resource_unit_matrix, int VLC_AP_index);
 
+void printResourceUnitMatrix(std::vector<std::vector<int>> &RU_matrix);
+
 void printBlockedUE(std::vector<int> &blocked_UE);
 #endif

@@ -179,7 +179,7 @@ void MyUeNode::updateNthResourceUnitBlock(int n, RuRangeType new_RU) {
         std::cout << "Access to RU_block vector is out of bound\n";
 }
 
-size_t MyUeNode::getRuBlockSize(void) {
+int MyUeNode::getRuBlockSize(void) {
     return RU_block.size();
 }
 
@@ -213,10 +213,17 @@ std::vector<RuRangeType> MyUeNode::getWholeRuBlock(void) {
     return std::vector<RuRangeType> ();
 }
 
-void MyUeNode::arrangeRuBlock(void) {
-    if (!RU_block.empty())
-        std::sort(RU_block.begin(), RU_block.end(),
+void MyUeNode::arrangeRuBlock(Order order) {
+    if (!RU_block.empty()) {
+        if (order == high_to_low) {
+            std::sort(RU_block.begin(), RU_block.end(),
                   [](RuRangeType &a, RuRangeType& b){ return ((a.first.first > b.first.first) || (a.first.first == b.first.first && a.first.second > b.first.second)); });
+        }
+        else if (order == low_to_high) {
+            std::sort(RU_block.begin(), RU_block.end(),
+                  [](RuRangeType &a, RuRangeType& b){ return ((a.first.first < b.first.first) || (a.first.first == b.first.first && a.first.second < b.first.second)); });
+        }
+    }
 }
 
 

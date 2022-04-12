@@ -20,7 +20,7 @@ std::vector<MyUeNode> initializeMyUeNodeList(NodeContainer &UE_nodes)
     // first, randomly generate required data rate and orientation angle for each UE
     // then, instantiate an new myUeNode object and add it into my_UE_list
 
-    std::uniform_real_distribution<double> uniform(1, 100);
+    std::uniform_real_distribution<double> uniform(1, 40);
     std::default_random_engine generator (std::chrono::system_clock::now().time_since_epoch().count());
 
     for (int i = 0; i < UE_num; i++) {

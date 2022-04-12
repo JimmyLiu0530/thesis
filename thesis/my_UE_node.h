@@ -13,6 +13,7 @@ using namespace ns3;
 
 typedef std::pair<std::pair<int,int>, std::pair<int,int>> RuRangeType;
 
+enum Order {high_to_low, low_to_high};
 
 class MyUeNode
 {
@@ -51,10 +52,10 @@ public:
     RuRangeType getNthResourceUnitBlock(int n);
     void removeNthResourceUnitBlock(int n);
     void removeLastResourceUnitBlock(void);
-    size_t getRuBlockSize(void);
+    int getRuBlockSize(void);
     void clearRuBlock(void);
     std::vector<RuRangeType> getWholeRuBlock(void);
-    void arrangeRuBlock(void);
+    void arrangeRuBlock(Order order);
 
 
 private:
