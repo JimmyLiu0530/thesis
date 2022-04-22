@@ -32,4 +32,5 @@ void printResourceUnitMatrix(std::vector<std::vector<std::vector<int>>> &resourc
 void printResourceUnitMatrix(std::vector<std::vector<int>> &RU_matrix);
 
 void printBlockedUE(std::vector<int> &blocked_UE);
+
 #endif

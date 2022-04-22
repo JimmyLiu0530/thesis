@@ -45,7 +45,7 @@ void lowComplexity(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matri
 
 void findBestSinrAP(std::vector<int> &best_SINR_AP,
                     std::vector<int> &served_by_RF,
-                    std::vector<double> &UE_demand,
+                    const std::vector<double> UE_demand,
                     std::vector<std::vector<int>> &unallocated_UE_under_best_VLC_AP,
                     std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix);
 
@@ -54,7 +54,7 @@ std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vecto
                                                 std::vector<double> &RF_data_rate_vector,
                                                 std::vector<int> &served_by_RF,
                                                 std::vector<std::vector<std::vector<int>>> RU_matrix_per_VLC_AP,
-                                                std::vector<double> &UE_demand,
+                                                const std::vector<double> UE_demand,
                                                 std::vector<double> &demand_discount_per_AP,
                                                 std::vector<std::pair<int, int>> first_empty_RU_position,
                                                 MyUeNode &UE_node);
@@ -66,6 +66,7 @@ double resourceAllocation(std::vector<double> &VLC_data_rate_matrix,
                             MyUeNode &UE_node);
 
 void residualResourceAllocation(double &discount_ratio,
+                                std::vector<std::vector<double>> &VLC_SINR_matrix,
                                 std::vector<std::vector<double>> &VLC_data_rate_matrix,
                                 std::vector<double> &throughput,
                                 std::vector<double> &satisfaction,
@@ -90,17 +91,14 @@ void takeResourceBack(std::vector<double> &VLC_data_rate_matrix,
                         double &throughput,
                         MyUeNode &UE_node);
 
-void allocateResourceEqually(std::vector<std::vector<double>> &VLC_data_rate_matrix,
-                                std::vector<double> &throughput,
-                                std::vector<double> &satisfaction,
-                                std::vector<int> &serving_UE,
-                                std::pair<int, int> &first_empty_RU_position,
-                                std::vector<std::vector<int>> &RU_matrix,
-                                std::vector<MyUeNode> &my_UE_list);
-
-void updateOneSatisfaction(double throughput, double &satisfaction, MyUeNode &UE_node);
-
-void updateAllSatisfaction(std::vector<int> &serving_UE, std::vector<double> &throughput, std::vector<double> &satisfaction, std::vector<MyUeNode> &my_UE_list);
+void allocateResourceEqually(std::vector<std::vector<double>> &VLC_SINR_matrix,
+                            std::vector<std::vector<double>> &VLC_data_rate_matrix,
+                            std::vector<double> &throughput,
+                            std::vector<double> &satisfaction,
+                            std::vector<int> &serving_UE,
+                            std::pair<int, int> &first_empty_RU_position,
+                            std::vector<std::vector<int>> &RU_matrix,
+                            std::vector<MyUeNode> &my_UE_list);
 
 void releaseAllResource(std::vector<std::vector<int>> &RU_matrix, std::pair<int, int> &first_empty_RU_position, MyUeNode &UE_node);
 
@@ -114,9 +112,8 @@ void goToPrevRU(int &subcarrier_idx, int &time_slot_idx);
 
 void goToNextRU(int &subcarrier_idx, int &time_slot_idx);
 
-void updateInfoToMyUeList(std::vector<double> &throughput,
-                          std::vector<double> &satisfaction,
-                          std::vector<MyUeNode> &my_UE_list);
+void updateInfoToMyUeList(std::vector<double> &throughput, std::vector<double> &satisfaction, std::vector<MyUeNode> &my_UE_list);
 
+std::vector<double> createDemandVector(std::vector<MyUeNode> &my_UE_list);
 
 #endif // PROPOSED_METHOD_H

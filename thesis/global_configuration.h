@@ -5,7 +5,8 @@
 #include <boost/math/constants/constants.hpp>
 
 #define DEBUG_MODE 0
-#define PROPOSED_METHOD 1
+#define PROPOSED_METHOD 0
+#define HIGH_PERFORMANCE 0
 
 
 const double PI = boost::math::constants::pi<double>();
@@ -107,14 +108,12 @@ const double beta = 1.0; // fairness coefficient
     parameters related to demand discounting ratio
 */
 const double delta_p = 0.05;
-// const double min_discount_ratio = 0.6;
-
 const double expel_ratio = 0.5;
-
+// const double stride = 5.0;
 
 /*
     the period of the complete configuration (in states)
 */
-const int complete_config_period = 50;
+const int complete_config_period = state_num;
 
 #endif // GLOBAL_CONFIGURATION_H
