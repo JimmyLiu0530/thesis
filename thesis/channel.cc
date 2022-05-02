@@ -21,6 +21,8 @@ static const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degre
 
     bit/s/Hz = 1 Mbit/s/MHz
 */
+
+
 static const std::map<double, double, std::greater<double>> SINR_to_spectral_efficiency = { {0.0, 0}, {1.0, 0.877}, {3.0, 1.1758}, {5.0, 1.4766},
                                                                                              {8.0, 1.9141}, {9.0, 2.4063}, {11.0, 2.7305}, {12.0, 3.3223},
                                                                                              {14.0, 3.9023}, {16.0, 4.5234}, {18.0, 5.1152}, {20.0, 5.5547} };
@@ -256,7 +258,7 @@ void calculateRfDataRate(std::vector<double> &RF_data_rate_vector) {
     // for the case when no serving UE
     RF_data_rate_vector[0] = 0.0;
 
-    for (int serving_UE_num = 1; serving_UE_num < UE_num+1; serving_UE_num++) {
+    for (int serving_UE_num = 1; serving_UE_num < UE_num + 1; serving_UE_num++) {
         double downlink_utilization_eff = calculateRfDownlinkUtilizationEfficiency(serving_UE_num);
 
         RF_data_rate_vector[serving_UE_num] = channel_bit_rate * downlink_utilization_eff / serving_UE_num;

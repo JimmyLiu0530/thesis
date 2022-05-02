@@ -63,17 +63,22 @@ void benchmarkDynamicLB(int &state,
     updateApAssociationResult(local_AP_association_matrix, AP_association_matrix, my_UE_list);
     updateResourceAllocationResult(throughtput_per_iteration, my_UE_list);
 
-    int counter = 0;
+
+    /*int counter = 0;
     double total_RF_satisfaction = 0;
+    double total_VLC_satisfaction = 0;
+
     for (int i = 0; i < my_UE_list.size(); i++) {
         if (my_UE_list[i].getCurrAssociatedAP() == 0) {
             counter++;
             total_RF_satisfaction += my_UE_list[i].getLastSatisfaction();
         }
+        else
+            total_VLC_satisfaction += my_UE_list[i].getLastSatisfaction();
     }
 
-    std::cout << "satisfaction provided by users connected to RF: " << total_RF_satisfaction / UE_num << " (" << counter << ")" << std::endl;
-    std::cout << "max. satisfaction in this state: " << (total_RF_satisfaction / UE_num) + (double)(UE_num - counter) / UE_num << std::endl << std::endl;
+    std::cout << "RF satisfaction provided: " << total_RF_satisfaction / counter << " (" << counter << ")" << std::endl;
+    std::cout << "VLC satisfaction: " << total_VLC_satisfaction / (UE_num - counter) << " (" << UE_num - counter << ")" << std::endl << std::endl;*/
 
 
 
@@ -94,23 +99,6 @@ void benchmarkDynamicLB(int &state,
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
 
 #endif // DEBUG_MODE
-
-    std::fstream out;
-    out.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/benchmark/state_" + std::to_string(state) + ".csv", std::ios::out | std::ios::trunc);
-    if (!out.is_open()) {
-        std::cout << "Fail to open benchmark.csv\n";
-        exit(EXIT_FAILURE);
-    }
-
-    out << "demand, throughput, satisfaction";
-    out << std::endl;
-
-    for (int i = 0; i < my_UE_list.size(); i++) {
-        out << my_UE_list[i].getRequiredDataRate() << "," << my_UE_list[i].getLastThroughput() << "," << my_UE_list[i].getLastSatisfaction() << ",";
-        out << std::endl;
-    }
-
-    out.close();
 }
 
 std::vector<int> initializedStep(std::vector<double> &RF_data_rate_vector,

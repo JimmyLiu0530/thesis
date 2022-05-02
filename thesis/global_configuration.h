@@ -14,12 +14,11 @@ const double room_size = 16;
 const int RF_AP_num = 1;
 const int VLC_AP_num = 16;
 const int VLC_AP_per_row = 4;
-const int UE_num = 100;
 const double time_period = 0.5; // sec
 const double avg_speed = 1.0;
 const double pause_time = 0.0;
-const int state_num = 50;
-
+const int state_num = 100;
+const int UE_num = 30;
 
 /*
     RF AP
@@ -74,7 +73,7 @@ const double HHO_efficiency = 0.9;
     RF channel
 */
 const int max_backoff_stage = 1024;
-const double channel_bit_rate = 1732.0*2.2; // *2.2 is to make RF data rate consistent with benchmark(Mbps)
+const double channel_bit_rate = 1732.0*5; // *2.2 is to make RF data rate consistent with benchmark(Mbps)
 const double RTS_time = 160.0; // µs
 const double CTS_time = 140.0; // µs
 const double header_time = 230.0; // µs
@@ -101,7 +100,7 @@ const double noise_variance = (1.0 - c_1 * c_1) * angle_variance * angle_varianc
 /*
     utility function
 */
-const double beta = 1.0; // fairness coefficient
+const double beta = 10; // fairness coefficient
 
 
 /*

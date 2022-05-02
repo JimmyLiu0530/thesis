@@ -43,12 +43,6 @@ void lowComplexity(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matri
                          std::vector<std::pair<int, int>> &first_empty_RU_position,
                          std::vector<MyUeNode> &my_UE_list);
 
-void findBestSinrAP(std::vector<int> &best_SINR_AP,
-                    std::vector<int> &served_by_RF,
-                    const std::vector<double> UE_demand,
-                    std::vector<std::vector<int>> &unallocated_UE_under_best_VLC_AP,
-                    std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix);
-
 
 std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                                                 std::vector<double> &RF_data_rate_vector,

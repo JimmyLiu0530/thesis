@@ -76,6 +76,8 @@ std::vector<double> recorded_avg_throughput_per_UE(UE_num, 0.0);
 std::vector<double> recorded_fairness_of_throughput_per_state(state_num, 0.0);
 std::vector<double> recorded_fairness_of_satisfaction_per_state(state_num, 0.0);
 std::vector<double> recorded_variance_of_satisfaction_per_state(state_num, 0.0);
+std::vector<double> recorded_VLC_satisfaction(state_num, 0.0);
+std::vector<double> recorded_RF_satisfaction(state_num, 0.0);
 
 
 
@@ -86,8 +88,6 @@ static int state = 0;
 uint8_t data[writeSize];
 std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output.csv";
 std::string user_info_path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/user_information/user_";
-
-std::fstream output_per_state;
 
 void StartFlow(Ptr<Socket>, Ipv4Address, uint16_t);
 void WriteUntilBufferFull(Ptr<Socket>, uint32_t);
@@ -163,6 +163,8 @@ void updateToNextState(NodeContainer &RF_AP_node,
     // 3. calculate the fairness of satisfaction and variance of satisfaction
     double satisfaction_fairness = 0.0;
     double variance_of_satisfaction = 0.0;
+    double RF_satisfaction = 0.0;
+    double VLC_satisfaction = 0.0;
     double square_of_sum = 0.0;
     double sum_of_square = 0.0;
 
@@ -173,12 +175,20 @@ void updateToNextState(NodeContainer &RF_AP_node,
         sum_of_square += pow(satisfaction, 2);
 
         variance_of_satisfaction += std::pow(satisfaction - avg_satisfaction, 2);
+
+        if (my_UE_list[i].getCurrAssociatedAP() > 0) {
+            VLC_satisfaction += satisfaction;
+        }
+        else
+            RF_satisfaction += satisfaction;
     }
     square_of_sum = pow(square_of_sum, 2);
     satisfaction_fairness = square_of_sum / (UE_num * sum_of_square);
 
     variance_of_satisfaction /= UE_num;
 
+    VLC_satisfaction /= (1 - recorded_RF_ratio[state]) * UE_num;
+    RF_satisfaction /= recorded_RF_ratio[state] * UE_num;
 
     // 4. calculate the fairness of throughput
     double throughput_fairness = 0.0;
@@ -210,6 +220,8 @@ void updateToNextState(NodeContainer &RF_AP_node,
     recorded_fairness_of_throughput_per_state[state] = throughput_fairness;
     recorded_fairness_of_satisfaction_per_state[state] = satisfaction_fairness;
     recorded_variance_of_satisfaction_per_state[state] = variance_of_satisfaction;
+    recorded_VLC_satisfaction[state] = VLC_satisfaction;
+    recorded_RF_satisfaction[state] = RF_satisfaction;
 
     // use another storage to keep UE's information
     // since somehow get nothing when accessing these information through my_UE_list after Simulator::Run()
@@ -219,10 +231,6 @@ void updateToNextState(NodeContainer &RF_AP_node,
             recorded_avg_satisfaction_per_UE[i] = my_UE_list[i].calculateAvgSatisfaction();
         }
     }
-
-    output_per_state << avg_data_rate << "," << throughput_fairness << "," << avg_satisfaction << "," << satisfaction_fairness << "," << variance_of_satisfaction << ",";
-    output_per_state << std::endl;
-
 
 #if DEBUG_MODE
     for (int i = 0; i < my_UE_list.size(); i++) {
@@ -273,14 +281,6 @@ int main(int argc, char *argv[])
       char m = toascii (97 + i % 26);
       data[i] = m;
     }
-
-
-    output_per_state.open("/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output_per_state.csv", std::ios::out | std::ios::trunc);
-    if (!output_per_state.is_open()) {
-        std::cout << "Fail to open file\n";
-        exit(EXIT_FAILURE);
-    }
-
 
     // create RF AP node
     NodeContainer RF_AP_node;
@@ -417,6 +417,8 @@ int main(int argc, char *argv[])
     double avg_satisfaction_fairness = 0.0;
     double avg_throughput_fairness = 0.0;
     double variance_of_satis = 0.0;
+    double VLC_satis = 0.0;
+    double RF_satis = 0.0;
 
     for (int i = 0; i < UE_num; i++) {
         avg_throughput += recorded_avg_throughput_per_UE[i];
@@ -425,36 +427,19 @@ int main(int argc, char *argv[])
     avg_throughput = avg_throughput / UE_num;
     avg_satisfaction = avg_satisfaction / UE_num;
 
-    /*
-    double sum_of_square = 0.0;
-    double square_of_sum = 0.0;
-    for (int i = 0; i < UE_num; i++) {
-        sum_of_square += std::pow(recorded_avg_satisfaction_per_UE[i], 2);
-        square_of_sum += recorded_avg_satisfaction_per_UE[i];
-    }
-    square_of_sum = std::pow(square_of_sum, 2);
-    avg_satisfaction_fairness = square_of_sum / (UE_num * sum_of_square);
-
-
-    sum_of_square = 0.0;
-    square_of_sum = 0.0;
-    for (int i = 0; i < UE_num; i++) {
-        sum_of_square += std::pow(recorded_avg_throughput_per_UE[i], 2);
-        square_of_sum += recorded_avg_throughput_per_UE[i];
-    }
-    square_of_sum = std::pow(square_of_sum, 2);
-    avg_throughput_fairness = square_of_sum / (UE_num * sum_of_square);
-    */
-
     for (int i = 0; i < state_num; i++) {
         avg_satisfaction_fairness += recorded_fairness_of_satisfaction_per_state[i];
         avg_throughput_fairness += recorded_fairness_of_throughput_per_state[i];
         variance_of_satis += recorded_variance_of_satisfaction_per_state[i];
+        VLC_satis += recorded_VLC_satisfaction[i];
+        RF_satis += recorded_RF_satisfaction[i];
     }
+
     avg_satisfaction_fairness /= state_num;
     avg_throughput_fairness /= state_num;
     variance_of_satis /= state_num;
-
+    VLC_satis /= state_num;
+    RF_satis /= state_num;
 
     // average percentage of WiFi connections
     double avg_RF_ratio = 0.0;
@@ -478,6 +463,8 @@ int main(int argc, char *argv[])
     std::cout << "avg. throughput: " << avg_throughput << " Mbps" << ", ";
     std::cout << "throughput fairness: " << avg_throughput_fairness << std::endl;
     std::cout << "avg. satisfaction: " << avg_satisfaction << ", ";
+    std::cout << "avg. VLC satisfaction: " << VLC_satis << ", ";
+    std::cout << "avg. RF satisfaction: " << RF_satis << std::endl;
     std::cout << "variance of satisfaction: " << variance_of_satis << ", ";
     std::cout << "satisfaction fairness: " << avg_satisfaction_fairness << std::endl;
     std::cout << "RF connection percentage: " << avg_RF_ratio << "%" << std::endl << std::endl;
@@ -493,14 +480,15 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     else {
-        output << avg_throughput << "," << avg_throughput_fairness << ","
-               << avg_satisfaction << "," << variance_of_satis << "," << avg_satisfaction_fairness << ","
-               << avg_RF_ratio << ",";
+        /*output << avg_throughput << "," << avg_throughput_fairness << ","
+               << avg_satisfaction << "," << VLC_satis << "," << RF_satis << ","
+               << variance_of_satis << "," << avg_satisfaction_fairness << ","
+               << avg_RF_ratio << ",";*/
+        output << avg_throughput << "," << avg_satisfaction << "," << variance_of_satis << ",";
         output << std::endl;
     }
 
     output.close();
-    output_per_state.close();
     Simulator::Destroy();
 }
 
