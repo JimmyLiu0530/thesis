@@ -30,6 +30,7 @@ public:
     double getRequiredDataRate(void);
 
     void setCurrAssociatedAP(int associated_AP_index);
+    void changeCurrAssociatedAP(int associated_AP_index);
     int getCurrAssociatedAP(void);
     int getPrevAssociatedAP(void);
 

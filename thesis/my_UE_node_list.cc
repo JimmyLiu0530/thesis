@@ -17,17 +17,14 @@ std::vector<MyUeNode> initializeMyUeNodeList(NodeContainer &UE_nodes)
 {
     std::vector<MyUeNode> my_UE_list;
     std::default_random_engine generator (std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<int> uniform(1, 100);
-    // std::normal_distribution<double> normal (75.5, 18.625);
+    std::uniform_int_distribution<int> uniform(1, demand_upper_bound);
 
     for (int i = 0; i < UE_num; i++) {
         double required_data_rate = uniform(generator);
-        // double required_data_rate = normal(generator);
 
         Ptr<MobilityModel> UE_mobility_model = (UE_nodes.Get(i))->GetObject<MobilityModel>();
         Vector pos = UE_mobility_model->GetPosition();
 
-        // my_UE_list.push_back(MyUeNode(i, pos, required_data_rate));
         my_UE_list.push_back(MyUeNode(i, pos, required_data_rate));
     }
 

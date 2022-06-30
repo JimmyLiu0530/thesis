@@ -33,7 +33,7 @@ void printVlcSinrMatrix(std::vector<std::vector<std::vector<double>>> &VLC_SINR_
             std::cout << "\tFor UE " << j << ": \n";
             std::cout << "\t";
 
-            for (int k = 0; k < subcarrier_num; k++) {
+            for (int k = 0; k <= effective_subcarrier_num; k++) {
                 std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(4) << VLC_SINR_matrix[i][j][k] << " ";
             }
 
@@ -69,7 +69,7 @@ void printVlcDataRateMatrix(std::vector<std::vector<std::vector<double>>> &VLC_d
             std::cout << "\tFor UE " << j << ": \n";
             std::cout << "\t";
 
-            for (int k = 0; k < subcarrier_num; k++) {
+            for (int k = 0; k <= effective_subcarrier_num; k++) {
                 std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(4) << VLC_data_rate_matrix[i][j][k] << " ";
             }
 

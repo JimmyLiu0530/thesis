@@ -10,7 +10,7 @@
 using namespace ns3;
 
 
-
+extern int counter;
 
 
 /*

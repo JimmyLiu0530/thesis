@@ -64,23 +64,6 @@ void benchmarkDynamicLB(int &state,
     updateResourceAllocationResult(throughtput_per_iteration, my_UE_list);
 
 
-    /*int counter = 0;
-    double total_RF_satisfaction = 0;
-    double total_VLC_satisfaction = 0;
-
-    for (int i = 0; i < my_UE_list.size(); i++) {
-        if (my_UE_list[i].getCurrAssociatedAP() == 0) {
-            counter++;
-            total_RF_satisfaction += my_UE_list[i].getLastSatisfaction();
-        }
-        else
-            total_VLC_satisfaction += my_UE_list[i].getLastSatisfaction();
-    }
-
-    std::cout << "RF satisfaction provided: " << total_RF_satisfaction / counter << " (" << counter << ")" << std::endl;
-    std::cout << "VLC satisfaction: " << total_VLC_satisfaction / (UE_num - counter) << " (" << UE_num - counter << ")" << std::endl << std::endl;*/
-
-
 
 #if DEBUG_MODE
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
@@ -99,6 +82,7 @@ void benchmarkDynamicLB(int &state,
     std::cout << "State " << state << " takes " << iteration_cnt << " iteration(s) to converge\n";
 
 #endif // DEBUG_MODE
+
 }
 
 std::vector<int> initializedStep(std::vector<double> &RF_data_rate_vector,

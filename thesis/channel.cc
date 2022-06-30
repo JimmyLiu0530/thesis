@@ -11,7 +11,7 @@
 
 
 
-static int counter = 0;
+int counter = 0;
 static const double lambertian_coefficient = (-1) / (log2(cos(degree2Radian(PHI_half)))); // m
 static const double concentrator_gain = pow(refractive_index, 2) / pow(sin(degree2Radian(field_of_view / 2)), 2);
 
@@ -55,7 +55,7 @@ void precalculation(NodeContainer  &RF_AP_node,
     // here we pre-calculate all possible data rates under different number of serving UEs,
     // thus we do this once and for all
     if (!counter) {
-        counter++;
+        counter = 1;
         calculateRfDataRate(RF_data_rate_vector);
     }
     // data rate for VLC
@@ -64,7 +64,7 @@ void precalculation(NodeContainer  &RF_AP_node,
 #if DEBUG_MODE
     printRfDataRateVector(RF_data_rate_vector);
     printVlcDataRateMatrix(VLC_data_rate_matrix);
-  #endif
+#endif
 }
 
 double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &UE_nodes,std::vector<MyUeNode> &my_UE_list, std::vector<std::vector<double>> &VLC_LOS_matrix) {
@@ -84,6 +84,7 @@ double calculateAllVlcLightOfSight(NodeContainer &VLC_AP_nodes, NodeContainer &U
 // line of sight
 double estimateOneVlcLightOfSight(Ptr<Node> VLC_AP, Ptr<Node> UE, MyUeNode &UE_node) {
     const double cosine_incidence_angle = getCosineOfIncidenceAngle(VLC_AP, UE, UE_node); // cos(ψ)
+
     if (radian2Degree(acos(cosine_incidence_angle)) > field_of_view / 2) // incidence angle exceeds half of FoV
         return 0.0;
 
@@ -184,12 +185,12 @@ double getDistance(Ptr<Node> AP, MyUeNode &UE_node) {
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix) {
     // pre-calculate front-end of all effective subcarriers
     std::vector<double> front_end_vector(effective_subcarrier_num+1, 0.0);
-    for (int i = 1; i < effective_subcarrier_num+1; i++)
+    for (int i = 1; i < effective_subcarrier_num + 1; i++)
         front_end_vector[i] = estimateOneVlcFrontEnd(i);
 
     for (int i = 0; i < VLC_AP_num; i++) {
 		for (int j = 0; j < UE_num; j++) {
-			for (int k = 1; k < effective_subcarrier_num+1; k++) {
+			for (int k = 1; k < effective_subcarrier_num + 1; k++) {
                 VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, front_end_vector, i, j, k);
 			}
 		}

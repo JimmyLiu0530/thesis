@@ -1,13 +1,12 @@
 #ifndef PROPOSED_METHOD_H
 #define PROPOSED_METHOD_H
 
-# include <vector>
+#include <vector>
 
 #include "my_UE_node.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
-
 
 
 void proposedDynamicLB (int state,
@@ -25,23 +24,23 @@ void proposedDynamicLB (int state,
                            std::vector<MyUeNode> &my_UE_list);
 
 
-void highPerformance(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
-                         std::vector<double> &RF_data_rate_vector,
-                         std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                         std::vector<std::vector<int>> &AP_association_matrix,
-                         std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                         std::vector<std::pair<int, int>> &first_empty_RU_position,
-                         std::vector<MyUeNode> &my_UE_list);
+void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+                                             std::vector<double> &RF_data_rate_vector,
+                                             std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                                             std::vector<std::vector<int>> &AP_association_matrix,
+                                             std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
+                                             std::vector<std::pair<int, int>> &first_empty_RU_position,
+                                             std::vector<MyUeNode> &my_UE_list);
 
 
-void lowComplexity(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
-                         std::vector<double> &RF_data_rate_vector,
-                         std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
-                         std::vector<std::vector<int>> &AP_association_matrix,
-                         std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
-                         std::vector<double> &discount_ratio_per_AP,
-                         std::vector<std::pair<int, int>> &first_empty_RU_position,
-                         std::vector<MyUeNode> &my_UE_list);
+void fullyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix,
+                                             std::vector<double> &RF_data_rate_vector,
+                                             std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
+                                             std::vector<std::vector<int>> &AP_association_matrix,
+                                             std::vector<std::vector<std::vector<int>>> &RU_matrix_per_VLC_AP,
+                                             std::vector<double> &discount_ratio_per_AP,
+                                             std::vector<std::pair<int, int>> &first_empty_RU_position,
+                                             std::vector<MyUeNode> &my_UE_list);
 
 
 std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
@@ -64,10 +63,13 @@ void residualResourceAllocation(double &discount_ratio,
                                 std::vector<std::vector<double>> &VLC_data_rate_matrix,
                                 std::vector<double> &throughput,
                                 std::vector<double> &satisfaction,
-                                std::vector<int> &serving_UE,
                                 std::pair<int, int> &first_empty_RU_position,
                                 std::vector<std::vector<int>> &RU_matrix,
-                                std::vector<MyUeNode> &my_UE_list);
+                                std::vector<MyUeNode> &my_UE_list,
+                                std::vector<std::vector<int>> &serving_UE,
+                                std::vector<std::vector<int>> &AP_association_matrix,
+                                std::vector<double> &RF_data_rate_vector,
+                                int VLC_AP_idx);
 
 void makeUpResourceDifference(double discount_ratio,
                               std::vector<std::vector<double>> &VLC_data_rate_matrix,

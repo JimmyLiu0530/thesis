@@ -5,8 +5,8 @@
 #include <boost/math/constants/constants.hpp>
 
 #define DEBUG_MODE 0
-#define PROPOSED_METHOD 0
-#define HIGH_PERFORMANCE 0
+#define PROPOSED_METHOD 1
+#define PCSBM 1
 
 
 const double PI = boost::math::constants::pi<double>();
@@ -17,8 +17,9 @@ const int VLC_AP_per_row = 4;
 const double time_period = 0.5; // sec
 const double avg_speed = 1.0;
 const double pause_time = 0.0;
-const int state_num = 100;
-const int UE_num = 30;
+const int state_num = 1000;
+const int UE_num = 100;
+extern int demand_upper_bound;
 
 /*
     RF AP
@@ -100,19 +101,19 @@ const double noise_variance = (1.0 - c_1 * c_1) * angle_variance * angle_varianc
 /*
     utility function
 */
-const double beta = 10; // fairness coefficient
+const double beta = 1.0; // fairness coefficient
 
 
 /*
     parameters related to demand discounting ratio
 */
 const double delta_p = 0.05;
-const double expel_ratio = 0.5;
-// const double stride = 5.0;
+const double expel_ratio = 0.1;
+
 
 /*
     the period of the complete configuration (in states)
 */
-const int complete_config_period = state_num;
+extern int complete_config_period;
 
 #endif // GLOBAL_CONFIGURATION_H

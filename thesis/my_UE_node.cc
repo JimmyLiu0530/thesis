@@ -54,6 +54,10 @@ void MyUeNode::setCurrAssociatedAP(int associated_AP_index) {
     curr_associated_AP = associated_AP_index;
 }
 
+void MyUeNode::changeCurrAssociatedAP(int associated_AP_index) {
+    curr_associated_AP = associated_AP_index;
+}
+
 int MyUeNode::getCurrAssociatedAP(void) {
     return curr_associated_AP;
 }
@@ -154,16 +158,6 @@ void MyUeNode::randomOrientationAngle(Ptr<Node> UE) {
 
         setAzimuthAngle(big_omega-PI);
     }
-
-    /*
-    if (UE_velocity.x == 0 && UE_velocity.y == 0)
-        setAzimuthAngle(-1*PI);
-    else if (UE_velocity.x == 0)
-        setAzimuthAngle(-0.5*PI); // 0.5*PI - PI
-    else {
-        double big_omega = atan(UE_velocity.y / UE_velocity.x); // in rad
-        setAzimuthAngle(big_omega-PI);
-    }*/
 }
 
 

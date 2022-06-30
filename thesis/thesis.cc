@@ -36,6 +36,7 @@
 #include <iomanip>
 #include <string>
 #include <stdlib.h>
+#include <time.h>
 
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
@@ -58,10 +59,15 @@ NS_LOG_COMPONENT_DEFINE ("TcpLargeTransfer");
 std::vector<double> Received(1, 0.0);
 std::vector<double> theTime(1, 0.0);
 
+std::vector<int> period_candidate = {5, 3, -3, -5};
+int complete_config_period = period_candidate[0];
+int demand_upper_bound = 100;
+static int state = 0;
+
 std::vector<std::vector<int>> AP_association_matrix(RF_AP_num + VLC_AP_num, std::vector<int> (UE_num, 0));
 std::vector<double> discount_ratio_per_AP(RF_AP_num + VLC_AP_num, 0.8);
 
-std::vector<double> RF_data_rate_vector(UE_num+1, 0.0); // in Mbps
+std::vector<double> RF_data_rate_vector(UE_num + 1, 0.0); // in Mbps
 
 std::vector<std::vector<double>> VLC_LOS_matrix(VLC_AP_num, std::vector<double> (UE_num, 0.0));
 std::vector<std::pair<int, int>> first_empty_RU_position (VLC_AP_num, std::make_pair(effective_subcarrier_num, time_slot_num - 1)); // the position of the first empty RU for each VLC AP (view from high freq to low)
@@ -72,31 +78,20 @@ std::vector<std::vector<std::vector<int>>> RU_matrix_per_VLC_AP(VLC_AP_num, std:
 std::vector<double> recorded_RF_ratio(state_num, 0.0); // the number of UEs that the RF AP serves in each state
 std::vector<double> recorded_avg_satisfaction_per_UE(UE_num, 0.0);
 std::vector<double> recorded_avg_throughput_per_UE(UE_num, 0.0);
-
 std::vector<double> recorded_fairness_of_throughput_per_state(state_num, 0.0);
-std::vector<double> recorded_fairness_of_satisfaction_per_state(state_num, 0.0);
 std::vector<double> recorded_variance_of_satisfaction_per_state(state_num, 0.0);
-std::vector<double> recorded_VLC_satisfaction(state_num, 0.0);
-std::vector<double> recorded_RF_satisfaction(state_num, 0.0);
-
-
 
 static const uint32_t totalTxBytes = 10000000;
 static uint32_t currentTxBytes = 0;
 static const uint32_t writeSize = 1040;
-static int state = 0;
 uint8_t data[writeSize];
-std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/output.csv";
+
+std::string path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/proposed/Hybrid_";
 std::string user_info_path = "/home/hsnl/repos/ns-3-allinone/ns-3.25/scratch/thesis/user_information/user_";
 
 void StartFlow(Ptr<Socket>, Ipv4Address, uint16_t);
 void WriteUntilBufferFull(Ptr<Socket>, uint32_t);
 
-std::string intToString(const int& num){
-	std::stringstream ss;
-	ss << num;
-	return ss.str();
-}
 
 /*
   used for tracing and calculating throughput
@@ -113,6 +108,43 @@ static void RxEndAddress(Ptr<const Packet> p, const Address &address) {
     std::cout << "Current time is :" << theTime.back() << std::endl;
     std::cout << "Received size: " << p->GetSize() << " at: " << Simulator::Now().GetSeconds() << "s"
               << "IP: " << InetSocketAddress::ConvertFrom(address).GetIpv4() << std::endl;
+}
+
+
+void initialize() {
+    state = 0;
+    counter = 0;
+
+    AP_association_matrix = std::vector<std::vector<int>> (RF_AP_num + VLC_AP_num, std::vector<int> (UE_num, 0));
+    discount_ratio_per_AP = std::vector<double> (RF_AP_num + VLC_AP_num, 0.8);
+    RF_data_rate_vector = std::vector<double> (UE_num + 1, 0.0); // in Mbps
+
+    VLC_LOS_matrix = std::vector<std::vector<double>> (VLC_AP_num, std::vector<double> (UE_num, 0.0));
+    first_empty_RU_position = std::vector<std::pair<int, int>> (VLC_AP_num, std::make_pair(effective_subcarrier_num, time_slot_num - 1)); // the position of the first empty RU for each VLC AP (view from high freq to low)
+    VLC_SINR_matrix = std::vector<std::vector<std::vector<double>>> (VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in dB
+    VLC_data_rate_matrix = std::vector<std::vector<std::vector<double>>> (VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0))); // in Mbps
+    RU_matrix_per_VLC_AP = std::vector<std::vector<std::vector<int>>> (VLC_AP_num, std::vector<std::vector<int>> (effective_subcarrier_num+1, std::vector<int> (time_slot_num, 0)));
+
+
+    recorded_avg_satisfaction_per_UE = std::vector<double> (UE_num, 0.0);
+    recorded_avg_throughput_per_UE =  std::vector<double> (UE_num, 0.0);
+    recorded_fairness_of_throughput_per_state = std::vector<double> (state_num, 0.0);
+    recorded_variance_of_satisfaction_per_state = std::vector<double> (state_num, 0.0);
+    recorded_RF_ratio = std::vector<double> (state_num, 0.0);
+}
+
+struct timespec diff(struct timespec start, struct timespec end) {
+    struct timespec tmp;
+    if ((end.tv_nsec - start.tv_nsec) < 0) {
+        tmp.tv_sec = end.tv_sec - start.tv_sec - 1;
+        tmp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
+    }
+    else {
+        tmp.tv_sec = end.tv_sec - start.tv_sec;
+        tmp.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+
+    return tmp;
 }
 
 
@@ -140,14 +172,16 @@ void updateToNextState(NodeContainer &RF_AP_node,
 #endif
 
 
+
     // 1. calculate the ratio of UEs connected to the RF AP to the total UEs
-    int counter = 0;
+    int cnt = 0;
 
     for (int i = 0; i < AP_association_matrix[0].size(); i++) {
         if (AP_association_matrix[0][i] == 1)
-            counter++;
+            cnt++;
     }
-    recorded_RF_ratio[state] = (double)counter / UE_num;
+    recorded_RF_ratio[state] = (double)cnt / UE_num;
+
 
     // 2. calculate the avg. data rate and satisfaction of the current state
     double avg_data_rate = 0.0;
@@ -160,40 +194,22 @@ void updateToNextState(NodeContainer &RF_AP_node,
     avg_data_rate = avg_data_rate / UE_num;
     avg_satisfaction = avg_satisfaction / UE_num;
 
-    // 3. calculate the fairness of satisfaction and variance of satisfaction
-    double satisfaction_fairness = 0.0;
+
+    // 3. calculate the variance of satisfaction
     double variance_of_satisfaction = 0.0;
-    double RF_satisfaction = 0.0;
-    double VLC_satisfaction = 0.0;
-    double square_of_sum = 0.0;
-    double sum_of_square = 0.0;
 
     for (int i = 0; i < UE_num; i++) {
         double satisfaction = my_UE_list[i].getLastSatisfaction();
 
-        square_of_sum += satisfaction;
-        sum_of_square += pow(satisfaction, 2);
-
         variance_of_satisfaction += std::pow(satisfaction - avg_satisfaction, 2);
-
-        if (my_UE_list[i].getCurrAssociatedAP() > 0) {
-            VLC_satisfaction += satisfaction;
-        }
-        else
-            RF_satisfaction += satisfaction;
     }
-    square_of_sum = pow(square_of_sum, 2);
-    satisfaction_fairness = square_of_sum / (UE_num * sum_of_square);
-
     variance_of_satisfaction /= UE_num;
 
-    VLC_satisfaction /= (1 - recorded_RF_ratio[state]) * UE_num;
-    RF_satisfaction /= recorded_RF_ratio[state] * UE_num;
 
     // 4. calculate the fairness of throughput
     double throughput_fairness = 0.0;
-    square_of_sum = 0.0;
-    sum_of_square = 0.0;
+    double square_of_sum = 0.0;
+    double sum_of_square = 0.0;
 
     for (int i = 0; i < UE_num; i++) {
         double throughput = my_UE_list[i].getLastThroughput();
@@ -212,16 +228,12 @@ void updateToNextState(NodeContainer &RF_AP_node,
     std::cout << "throughput fairness: " << throughput_fairness << std::endl;
     std::cout << "avg satisfaction: " << avg_satisfaction << ", ";
     std::cout << "variance of satisfaction: " << variance_of_satisfaction << ", ";
-    std::cout << "satisfaction fairness: " << satisfaction_fairness << std::endl;
     std::cout << "RF connection ratio: " << recorded_RF_ratio[state]* 100 << "%" << std::endl << std::endl;
 #endif // DEBUG_MODE
 
 
     recorded_fairness_of_throughput_per_state[state] = throughput_fairness;
-    recorded_fairness_of_satisfaction_per_state[state] = satisfaction_fairness;
     recorded_variance_of_satisfaction_per_state[state] = variance_of_satisfaction;
-    recorded_VLC_satisfaction[state] = VLC_satisfaction;
-    recorded_RF_satisfaction[state] = RF_satisfaction;
 
     // use another storage to keep UE's information
     // since somehow get nothing when accessing these information through my_UE_list after Simulator::Run()
@@ -250,246 +262,225 @@ void updateToNextState(NodeContainer &RF_AP_node,
     }
 #endif // DEBUG_MODE
 
-
-    state++;
-
     if (!Simulator::IsFinished())
         Simulator::Schedule(Seconds(time_period), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
 
+    state++;
 }
 
 
 int main(int argc, char *argv[])
 {
-    // Users may find it convenient to turn on explicit debugging
-    // for selected modules; the below lines suggest how to do this
-    //  LogComponentEnable("TcpL4Protocol", LOG_LEVEL_ALL);
-    //  LogComponentEnable("TcpSocketImpl", LOG_LEVEL_ALL);
-    //  LogComponentEnable("PacketSink", LOG_LEVEL_ALL);
-    //  LogComponentEnable("TcpLargeTransfer", LOG_LEVEL_ALL);
+    for (int i = 0; i < period_candidate.size(); i++) {
+        complete_config_period = period_candidate[i];
+        demand_upper_bound = 100;
 
-    CommandLine cmd;
-    cmd.Parse (argc, argv);
+        while (demand_upper_bound <= 250) {
+            struct timespec start, end;
 
-    Config::SetDefault("ns3::TcpSocket::SegmentSize",UintegerValue(1000));
-    Config::SetDefault("ns3::TcpSocket::SndBufSize",UintegerValue(1000000000));
-    Config::SetDefault("ns3::TcpSocket::RcvBufSize",UintegerValue(1000000000));
+            initialize();
 
-    // initialize the tx buffer.
-    for(uint32_t i = 0; i < writeSize; ++i)
-    {
-      char m = toascii (97 + i % 26);
-      data[i] = m;
+            // create RF AP node
+            NodeContainer RF_AP_node;
+            RF_AP_node.Create(RF_AP_num);
+            installRfApMobility(RF_AP_node);
+
+        #if DEBUG_MODE
+            printRfApPosition(RF_AP_node);
+        #endif
+
+            // create VLC AP nodes
+            NodeContainer VLC_AP_nodes;
+            VLC_AP_nodes.Create (VLC_AP_num);
+            installVlcApMobility(VLC_AP_nodes);
+
+        #if DEBUG_MODE
+            printVlcApPosition(VLC_AP_nodes);
+        #endif
+
+            // create UE nodes
+            NodeContainer UE_nodes;
+            UE_nodes.Create (UE_num);
+            installUeMobility(UE_nodes);
+
+        #if DEBUG_MODE
+            printUePosition(UE_nodes);
+        #endif
+
+            std::vector<MyUeNode> my_UE_list = initializeMyUeNodeList(UE_nodes);
+
+
+            /** add ip/tcp stack to all nodes.**/
+            // InternetStackHelper internet;
+            // internet.InstallAll ();
+
+
+            // /** set p2p helper **/
+            // PointToPointHelper p2p;
+            // p2p.SetDeviceAttribute ("DataRate", StringValue ("5Mbps"));
+            // p2p.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0.1)));
+
+            // /*
+            //   Channel[i][j] 放的是 AP i - UE j的link
+            //   該link用Netdevicecontainer表達
+            //   Netdevicecontainer.Get(0) = transmitter device
+            //   Netdevicecontainer.Get(1) = receiver device
+            // */
+
+            // std::vector<std::vector<NetDeviceContainer>> VLC_Channel(VLC_AP_Num,std::vector<NetDeviceContainer> (UE_Num));
+            // for(int i=0;i<VLC_AP_Num;i++){
+            //   for(int j=0;j<UE_Num;j++){
+            //     VLC_Channel[i][j]=p2p.Install(VLC_AP_Nodes.Get(i),UE_Nodes.Get(j));
+            //   }
+            // }
+
+            // /** Later, we add IP addresses. **/
+            // std::vector<Ipv4InterfaceContainer> ipvec;
+            // Ipv4AddressHelper ipv4;
+            // for(int i=0;i<VLC_AP_Num;i++){
+            //   for(int j=0;j<UE_Num;j++){
+            //     std::string addressStr = "10."+std::to_string(i+1) +"." + std::to_string(j+1) + ".0";
+            //     ipv4.SetBase(addressStr.c_str(),"255.255.255.0");
+            //     ipvec.push_back(ipv4.Assign (VLC_Channel[i][j]));
+
+            //     #if DEBUG_MODE
+            //       std::cout<<ipvec.back().GetAddress(1)<<" ";
+            //     #endif
+            //   }
+            //   #if DEBUG_MODE
+            //     std::cout << std::endl;
+            //   #endif
+            // }
+
+            // // set serve Port
+            // uint16_t servPort = 50000;
+
+            // // Create a packet sink to receive these packets on n2...
+            // PacketSinkHelper sink ("ns3::TcpSocketFactory",
+            //                        InetSocketAddress (Ipv4Address::GetAny (), servPort));
+
+            // ApplicationContainer apps ;
+            // apps.Add(sink.Install(UE_Nodes));
+            // apps.Start (Seconds (0.0));
+            // apps.Stop (Seconds (6.0));
+
+            // // Create and bind the socket...
+            // std::vector<std::vector<Ptr<Socket>>> localSockets(VLC_AP_Num,std::vector<Ptr<Socket> > (UE_Num));
+            // for(int i=0;i<VLC_AP_Num;i++){
+            //   for(int j=0;j<UE_Num;j++){
+            //     localSockets[i][j] = Socket::CreateSocket (VLC_AP_Nodes.Get (i), TcpSocketFactory::GetTypeId ());
+            //     localSockets[i][j]->Bind();
+            //   }
+            // }
+            // // Trace changes to the congestion window
+            // // Config::ConnectWithoutContext ("/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeCallback (&CwndTracer));
+
+            // ApplicationContainer::Iterator i;
+            // for (i = apps.Begin (); i != apps.End (); ++i){
+            //         (*i)->TraceConnectWithoutContext("Rx", MakeCallback(&RxEndAddress));
+            // }
+            // // ...and schedule the sending "Application"; This is similar to what an
+            // // ns3::Application subclass would do internally.
+
+            // int ipvec_index=0;
+            // for(int i=0;i<VLC_AP_Num;i++){
+            //   for(int j=0;j<UE_Num;j++){
+            //     Simulator::Schedule(Seconds(0.0),&StartFlow,localSockets[i][j],ipvec[ipvec_index++].GetAddress(1), servPort);
+            //   }
+            // }
+
+            // start time
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
+
+            Simulator::Schedule(Seconds(0.0), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
+            Simulator::Stop(Seconds(state_num * time_period));
+
+            Simulator::Run();
+
+
+            // end time
+            clock_gettime(CLOCK_MONOTONIC, &end);
+
+
+            /*
+             * after simulation, calculate overall throughput, fairness index and satisfaction
+             */
+
+            // overall avg. throughput, satisfaction, satisfaction variance, and fairness index
+            double avg_throughput = 0.0;
+            double avg_satisfaction = 0.0;
+            double avg_throughput_fairness = 0.0;
+            double variance_of_satis = 0.0;
+
+            for (int i = 0; i < UE_num; i++) {
+                avg_throughput += recorded_avg_throughput_per_UE[i];
+                avg_satisfaction += recorded_avg_satisfaction_per_UE[i];
+            }
+            avg_throughput = avg_throughput / UE_num;
+            avg_satisfaction = avg_satisfaction / UE_num;
+
+            for (int i = 0; i < state_num; i++) {
+                avg_throughput_fairness += recorded_fairness_of_throughput_per_state[i];
+                variance_of_satis += recorded_variance_of_satisfaction_per_state[i];
+            }
+            avg_throughput_fairness /= state_num;
+            variance_of_satis /= state_num;
+
+
+            // average percentage of WiFi connections
+            double avg_RF_ratio = 0.0;
+            for (int i = 0; i < recorded_RF_ratio.size(); i++)
+                avg_RF_ratio += recorded_RF_ratio[i];
+
+            avg_RF_ratio = (avg_RF_ratio / recorded_RF_ratio.size()) * 100;
+
+
+            // calculate the actual executing time
+            struct timespec tmp = diff(start, end);
+            double exec_time = tmp.tv_sec + (double) tmp.tv_nsec / 1000000000.0;
+
+
+            std::string name;
+            if (complete_config_period == 5)
+                name = "1F+4P";
+            else if (complete_config_period == 3)
+                name = "1F+2P";
+            else if (complete_config_period == -3)
+                name = "2F+1P";
+            else
+                name = "4F+1P";
+
+
+            std::cout << "In this simulation ((1, " << demand_upper_bound << "), " << name << "), " << std::endl;
+            std::cout << "avg. throughput: " << avg_throughput << " Mbps" << ", ";
+            std::cout << "avg. satisfaction: " << avg_satisfaction << ", ";
+            std::cout << "variance of satisfaction: " << variance_of_satis << ", " << std::endl;
+            std::cout << "RF connection percentage: " << avg_RF_ratio << "%, ";
+            std::cout << "execution time: " << exec_time << std::endl << std::endl;
+
+
+            /*
+             * output the results to .csv files
+             */
+            std::fstream output;
+
+            output.open(path + name + "_" + std::to_string(demand_upper_bound) + ".csv", std::ios::out | std::ios::app);
+            if (!output.is_open()) {
+                std::cout << "Fail to open file\n";
+                exit(EXIT_FAILURE);
+            }
+            else {
+                output << avg_throughput << "," << avg_satisfaction << "," << variance_of_satis << "," << exec_time << ",";
+                output << std::endl;
+            }
+
+            output.close();
+            Simulator::Destroy();
+
+            demand_upper_bound += 50;
+        }
     }
-
-    // create RF AP node
-    NodeContainer RF_AP_node;
-    RF_AP_node.Create(RF_AP_num);
-    installRfApMobility(RF_AP_node);
-
-#if DEBUG_MODE
-    printRfApPosition(RF_AP_node);
-#endif
-
-    // create VLC AP nodes
-    NodeContainer VLC_AP_nodes;
-    VLC_AP_nodes.Create (VLC_AP_num);
-    installVlcApMobility(VLC_AP_nodes);
-
-#if DEBUG_MODE
-    printVlcApPosition(VLC_AP_nodes);
-#endif
-
-    // create UE nodes
-    NodeContainer UE_nodes;
-    UE_nodes.Create (UE_num);
-    installUeMobility(UE_nodes);
-
-#if DEBUG_MODE
-    printUePosition(UE_nodes);
-#endif
-
-    std::vector<MyUeNode> my_UE_list = initializeMyUeNodeList(UE_nodes);
-
-
-    /** add ip/tcp stack to all nodes.**/
-    // InternetStackHelper internet;
-    // internet.InstallAll ();
-
-
-
-
-    // /** set p2p helper **/
-    // PointToPointHelper p2p;
-    // p2p.SetDeviceAttribute ("DataRate", StringValue ("5Mbps"));
-    // p2p.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0.1)));
-
-
-
-    // /*
-    //   Channel[i][j] 放的是 AP i - UE j的link
-    //   該link用Netdevicecontainer表達
-    //   Netdevicecontainer.Get(0) = transmitter device
-    //   Netdevicecontainer.Get(1) = receiver device
-    // */
-
-    // std::vector<std::vector<NetDeviceContainer>> VLC_Channel(VLC_AP_Num,std::vector<NetDeviceContainer> (UE_Num));
-    // for(int i=0;i<VLC_AP_Num;i++){
-    //   for(int j=0;j<UE_Num;j++){
-    //     VLC_Channel[i][j]=p2p.Install(VLC_AP_Nodes.Get(i),UE_Nodes.Get(j));
-    //   }
-    // }
-
-    // /** Later, we add IP addresses. **/
-    // std::vector<Ipv4InterfaceContainer> ipvec;
-    // Ipv4AddressHelper ipv4;
-    // for(int i=0;i<VLC_AP_Num;i++){
-    //   for(int j=0;j<UE_Num;j++){
-    //     std::string addressStr = "10."+intToString(i+1) +"." + intToString(j+1) + ".0";
-    //     ipv4.SetBase(addressStr.c_str(),"255.255.255.0");
-    //     ipvec.push_back(ipv4.Assign (VLC_Channel[i][j]));
-
-    //     #if DEBUG_MODE
-    //       std::cout<<ipvec.back().GetAddress(1)<<" ";
-    //     #endif
-    //   }
-    //   #if DEBUG_MODE
-    //     std::cout << std::endl;
-    //   #endif
-    // }
-
-
-
-    // // set serve Port
-    // uint16_t servPort = 50000;
-
-    // // Create a packet sink to receive these packets on n2...
-    // PacketSinkHelper sink ("ns3::TcpSocketFactory",
-    //                        InetSocketAddress (Ipv4Address::GetAny (), servPort));
-
-    // ApplicationContainer apps ;
-    // apps.Add(sink.Install(UE_Nodes));
-    // apps.Start (Seconds (0.0));
-    // apps.Stop (Seconds (6.0));
-
-
-
-    // // Create and bind the socket...
-    // std::vector<std::vector<Ptr<Socket>>> localSockets(VLC_AP_Num,std::vector<Ptr<Socket> > (UE_Num));
-    // for(int i=0;i<VLC_AP_Num;i++){
-    //   for(int j=0;j<UE_Num;j++){
-    //     localSockets[i][j] = Socket::CreateSocket (VLC_AP_Nodes.Get (i), TcpSocketFactory::GetTypeId ());
-    //     localSockets[i][j]->Bind();
-    //   }
-    // }
-    // // Trace changes to the congestion window
-    // // Config::ConnectWithoutContext ("/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeCallback (&CwndTracer));
-
-    // ApplicationContainer::Iterator i;
-    // for (i = apps.Begin (); i != apps.End (); ++i){
-    //         (*i)->TraceConnectWithoutContext("Rx", MakeCallback(&RxEndAddress));
-    // }
-    // // ...and schedule the sending "Application"; This is similar to what an
-    // // ns3::Application subclass would do internally.
-
-    // int ipvec_index=0;
-    // for(int i=0;i<VLC_AP_Num;i++){
-    //   for(int j=0;j<UE_Num;j++){
-    //     Simulator::Schedule(Seconds(0.0),&StartFlow,localSockets[i][j],ipvec[ipvec_index++].GetAddress(1), servPort);
-    //   }
-    // }
-
-
-    Simulator::Schedule(Seconds(0.0), &updateToNextState, RF_AP_node, VLC_AP_nodes, UE_nodes, my_UE_list);
-
-    Simulator::Stop(Seconds(state_num * time_period));
-    Simulator::Run();
-
-
-
-    /*
-     * after simulation, calculate overall throughput, fairness index and satisfaction
-    */
-
-    // overall avg. throughput, satisfaction, satisfaction variance, and fairness index
-    double avg_throughput = 0.0;
-    double avg_satisfaction = 0.0;
-    double avg_satisfaction_fairness = 0.0;
-    double avg_throughput_fairness = 0.0;
-    double variance_of_satis = 0.0;
-    double VLC_satis = 0.0;
-    double RF_satis = 0.0;
-
-    for (int i = 0; i < UE_num; i++) {
-        avg_throughput += recorded_avg_throughput_per_UE[i];
-        avg_satisfaction += recorded_avg_satisfaction_per_UE[i];
-    }
-    avg_throughput = avg_throughput / UE_num;
-    avg_satisfaction = avg_satisfaction / UE_num;
-
-    for (int i = 0; i < state_num; i++) {
-        avg_satisfaction_fairness += recorded_fairness_of_satisfaction_per_state[i];
-        avg_throughput_fairness += recorded_fairness_of_throughput_per_state[i];
-        variance_of_satis += recorded_variance_of_satisfaction_per_state[i];
-        VLC_satis += recorded_VLC_satisfaction[i];
-        RF_satis += recorded_RF_satisfaction[i];
-    }
-
-    avg_satisfaction_fairness /= state_num;
-    avg_throughput_fairness /= state_num;
-    variance_of_satis /= state_num;
-    VLC_satis /= state_num;
-    RF_satis /= state_num;
-
-    // average percentage of WiFi connections
-    double avg_RF_ratio = 0.0;
-    for (int i = 0; i < recorded_RF_ratio.size(); i++)
-        avg_RF_ratio += recorded_RF_ratio[i];
-
-    avg_RF_ratio = (avg_RF_ratio / recorded_RF_ratio.size()) * 100;
-
-
-    std::string str;
-    if (PROPOSED_METHOD) {
-        if (HIGH_PERFORMANCE)
-            str = "proposed-high";
-        else
-            str = "proposed-low";
-    }
-    else
-        str = "benchmark";
-
-    std::cout << "In this simulation (" << str << "), " << std::endl;
-    std::cout << "avg. throughput: " << avg_throughput << " Mbps" << ", ";
-    std::cout << "throughput fairness: " << avg_throughput_fairness << std::endl;
-    std::cout << "avg. satisfaction: " << avg_satisfaction << ", ";
-    std::cout << "avg. VLC satisfaction: " << VLC_satis << ", ";
-    std::cout << "avg. RF satisfaction: " << RF_satis << std::endl;
-    std::cout << "variance of satisfaction: " << variance_of_satis << ", ";
-    std::cout << "satisfaction fairness: " << avg_satisfaction_fairness << std::endl;
-    std::cout << "RF connection percentage: " << avg_RF_ratio << "%" << std::endl << std::endl;
-
-
-    /*
-     * output the results to .csv files
-     */
-    std::fstream output;
-    output.open(path, std::ios::out | std::ios::app);
-    if (!output.is_open()) {
-        std::cout << "Fail to open file\n";
-        exit(EXIT_FAILURE);
-    }
-    else {
-        /*output << avg_throughput << "," << avg_throughput_fairness << ","
-               << avg_satisfaction << "," << VLC_satis << "," << RF_satis << ","
-               << variance_of_satis << "," << avg_satisfaction_fairness << ","
-               << avg_RF_ratio << ",";*/
-        output << avg_throughput << "," << avg_satisfaction << "," << variance_of_satis << ",";
-        output << std::endl;
-    }
-
-    output.close();
-    Simulator::Destroy();
 }
 
 
