@@ -11,32 +11,29 @@
 
 const double PI = boost::math::constants::pi<double>();
 const double room_size = 16;
-const int RF_AP_num = 1;
-const int VLC_AP_num = 16;
-const int VLC_AP_per_row = 4;
 const double time_period = 0.5; // sec
-const double avg_speed = 1.0;
-const double pause_time = 0.0;
 const int state_num = 1000;
-const int UE_num = 100;
-extern int demand_upper_bound;
+
 
 /*
     RF AP
 */
+const int RF_AP_num = 1;
 const double RF_AP_height = 3.5; // m
 
 /*
     VLC AP
 */
-const double VLC_AP_height = 3.5;
+const int VLC_AP_num = 16;
+const int VLC_AP_per_row = 4;
 const int VLC_AP_power = 9;
 const int VLC_AP_bandwidth = 300; // MHz
+const double VLC_AP_height = 3.5;
 const double noise_power_spectral_density = 1e-13;  //N_0 = 1e-19 A^2/Hz = 1e-13 A^2/MHz
 const double conversion_efficiency = 0.53; // optical to electrical conversion efficiency
 const double optical_to_electric_power_ratio = 3.0; // κ
 
-// these two values are found in "Resource Allocation in LiFi OFDMA Systems"
+// these values are found in "Resource Allocation in LiFi OFDMA Systems"
 const int subcarrier_num = 40; // M = 64
 const int effective_subcarrier_num = subcarrier_num / 2 - 1; // M_e = M/2 - 1
 const int time_slot_num = 32; // K = 20
@@ -45,11 +42,11 @@ const int time_slot_num = 32; // K = 20
 /*
     UE
 */
+const int UE_num = 150;
+const int demand_upper_bound = 100;
 const double UE_height = 1.5;
-
-// minimum acceptable discount on user's demand
-//const double min_discount = 0.7;
-
+const double avg_speed = 1.0; // m/s
+const double pause_time = 0.0;
 
 /*
     VLC channel
@@ -74,7 +71,7 @@ const double HHO_efficiency = 0.9;
     RF channel
 */
 const int max_backoff_stage = 1024;
-const double channel_bit_rate = 1732.0*5; // *2.2 is to make RF data rate consistent with benchmark(Mbps)
+const double channel_bit_rate = 1732.0 * 5;
 const double RTS_time = 160.0; // µs
 const double CTS_time = 140.0; // µs
 const double header_time = 230.0; // µs
@@ -107,13 +104,14 @@ const double beta = 1.0; // fairness coefficient
 /*
     parameters related to demand discounting ratio
 */
+const double initial_discount = 0.8;
 const double delta_p = 0.05;
-const double expel_ratio = 0.1;
+const double expel_ratio = 0.5;
 
 
 /*
-    the period of the complete configuration (in states)
+    the period of PCSBM (in states)
 */
-extern int complete_config_period;
+const int complete_config_period = state_num;
 
 #endif // GLOBAL_CONFIGURATION_H

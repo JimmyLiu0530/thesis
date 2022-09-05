@@ -39,8 +39,7 @@ void benchmarkDynamicLB(int &state,
     int next_iteration_flag = 0;
     int iteration_cnt = 1;
 
-    do
-    {
+    do {
         next_iteration_flag = 0;
         std::vector<int> new_serving_AP = EGT_basedLoadBalance(RF_data_rate_vector, VLC_data_rate_matrix, local_AP_association_matrix, throughtput_per_iteration);
 

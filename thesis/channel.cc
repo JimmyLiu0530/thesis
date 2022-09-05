@@ -49,6 +49,7 @@ void precalculation(NodeContainer  &RF_AP_node,
     printVlcSinrMatrix(VLC_SINR_matrix);
 #endif
 
+
     // data rate for RF
     //
     // since RF data rate only depends on the number of serving UE,
@@ -58,8 +59,10 @@ void precalculation(NodeContainer  &RF_AP_node,
         counter = 1;
         calculateRfDataRate(RF_data_rate_vector);
     }
+
     // data rate for VLC
     calculateAllVlcDataRate(VLC_SINR_matrix, VLC_data_rate_matrix);
+
 
 #if DEBUG_MODE
     printRfDataRateVector(RF_data_rate_vector);
@@ -182,16 +185,39 @@ double getDistance(Ptr<Node> AP, MyUeNode &UE_node) {
 /*
     VLC SINR
 */
+
 void calculateAllVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix) {
+    // initialize VLC_SINR_matrix
+    VLC_SINR_matrix = std::vector<std::vector<std::vector<double>>> (VLC_AP_num, std::vector<std::vector<double>> (UE_num, std::vector<double> (subcarrier_num, 0.0)));
+
     // pre-calculate front-end of all effective subcarriers
-    std::vector<double> front_end_vector(effective_subcarrier_num+1, 0.0);
+    std::vector<double> front_end_vector(effective_subcarrier_num + 1, 0.0);
     for (int i = 1; i < effective_subcarrier_num + 1; i++)
         front_end_vector[i] = estimateOneVlcFrontEnd(i);
 
-    for (int i = 0; i < VLC_AP_num; i++) {
-		for (int j = 0; j < UE_num; j++) {
-			for (int k = 1; k < effective_subcarrier_num + 1; k++) {
-                VLC_SINR_matrix[i][j][k] = estimateOneVlcSINR(VLC_LOS_matrix, front_end_vector, i, j, k);
+    for (int VLC_AP_idx = 0; VLC_AP_idx < VLC_AP_num; VLC_AP_idx++) {
+		for (int UE_idx = 0; UE_idx < UE_num; UE_idx++) {
+			double interference = 0.0;
+            for (int i = 0; i < VLC_AP_num; i++) {
+                if (i != VLC_AP_idx)
+                    interference += pow(VLC_LOS_matrix[i][UE_idx], 2);
+            }
+
+            double lower_than_one_sinr_start_idx = 0.0;
+            if (std::pow(VLC_LOS_matrix[VLC_AP_idx][UE_idx], 2) - interference <= 0) {
+                lower_than_one_sinr_start_idx = 1;
+            }
+            else {
+                double first_term = subcarrier_num * fitting_coefficient * three_dB_cutoff / (VLC_AP_bandwidth * 2);
+                double inner_numerator = std::pow(optical_to_electric_power_ratio, 2) * noise_power_spectral_density * VLC_AP_bandwidth;
+                double inner_denominator = std::pow(conversion_efficiency * VLC_AP_power, 2) * (std::pow(VLC_LOS_matrix[VLC_AP_idx][UE_idx], 2) - interference);
+                double second_term = log(inner_numerator / inner_denominator);
+
+                lower_than_one_sinr_start_idx = ceil(-1 * first_term * second_term);
+            }
+
+			for (int k = 1; k < (int)lower_than_one_sinr_start_idx; k++) {
+                VLC_SINR_matrix[VLC_AP_idx][UE_idx][k] = estimateOneVlcSINR(VLC_LOS_matrix, front_end_vector, VLC_AP_idx, UE_idx, k);
 			}
 		}
 	}
@@ -208,7 +234,7 @@ double estimateOneVlcSINR(std::vector<std::vector<double>> &VLC_LOS_matrix, std:
     double SINR = pow(conversion_efficiency * VLC_AP_power * VLC_LOS_matrix[VLC_AP_index][UE_index] * front_end_vector[subcarrier_index], 2) / (interference + noise);
 
     // change to logarithmic SINR
-    return (SINR == 0) ? 0.0 : 10*log10(SINR);
+    return (SINR == 0.0) ? 0.0 : 10*log10(SINR);
 }
 
 // front-end
@@ -230,7 +256,7 @@ void calculateAllVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_
 	}
 }
 
-// data rate of the RU on the certain subcarrier based on (6)
+// data rate of the RU on the certain subcarrier based on Eq. (6) in the benchmark
 double estimateOneVlcDataRate(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix, int VLC_AP_index, int UE_index, int subcarrier_index) {
     double numerator = 2 * VLC_AP_bandwidth * getSpectralEfficiency(VLC_SINR_matrix[VLC_AP_index][UE_index][subcarrier_index]);
     double denominator = subcarrier_num * time_slot_num;

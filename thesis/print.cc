@@ -24,6 +24,7 @@ void printVlcLosMatrix(std::vector<std::vector<double>> &VLC_LOS_matrix)
 
 void printVlcSinrMatrix(std::vector<std::vector<std::vector<double>>> &VLC_SINR_matrix)
 {
+
     std::cout << "VLC SINR matrix as below: " << std::endl;
 
     for (int i = 0; i < VLC_AP_num; i++) {

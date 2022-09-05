@@ -1,6 +1,6 @@
 /*
     Note that
-    (1) if an variable represents real index of something, like UE, AP,..., then it will be added with suffix "_idx".
+    (1) if an variable represents real index of something, like UE, AP,..., then it is suffixed with "_idx".
 */
 
 #include <map>
@@ -11,6 +11,7 @@
 #include <math.h>
 #include <string>
 
+
 #include "print.h"
 #include "channel.h"
 #include "my_UE_node.h"
@@ -19,6 +20,10 @@
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 #include "global_configuration.h"
+
+
+// defined in thesis.cc
+extern std::vector<std::pair<int, int>> expelled_num_of_user;
 
 
 
@@ -42,35 +47,26 @@ void proposedDynamicLB(int state,
 
 #if PCSBM
 
-    /*if (state % complete_config_period == 0) {
-        fullyConfigSatisfactionBalancedMethod(VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix, AP_association_matrix, RU_matrix_per_VLC_AP,
-                                                    discount_ratio_per_AP, first_empty_RU_position, my_UE_list);
-    }
-    else {
-        partiallyConfigSatisfactionBalancedMethod(VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix, AP_association_matrix,
-                                                RU_matrix_per_VLC_AP, first_empty_RU_position, my_UE_list);
-    }*/
-
     if (complete_config_period > 0) {
         if (state % complete_config_period == 0) {
             fullyConfigSatisfactionBalancedMethod(VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix, AP_association_matrix, RU_matrix_per_VLC_AP,
-                                                    discount_ratio_per_AP, first_empty_RU_position, my_UE_list);
+                                                        discount_ratio_per_AP, first_empty_RU_position, my_UE_list);
         }
         else {
             partiallyConfigSatisfactionBalancedMethod(VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix, AP_association_matrix,
                                                     RU_matrix_per_VLC_AP, first_empty_RU_position, my_UE_list);
         }
     }
-    else {
-        int phase = -1*complete_config_period;
+    else if (complete_config_period < 0){
+        int positive_period =  -1 * complete_config_period;
 
-        if (state % phase == (phase-1)) {
+        if (state % positive_period == (positive_period - 1)) {
             partiallyConfigSatisfactionBalancedMethod(VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix, AP_association_matrix,
                                                     RU_matrix_per_VLC_AP, first_empty_RU_position, my_UE_list);
         }
         else {
             fullyConfigSatisfactionBalancedMethod(VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix, AP_association_matrix, RU_matrix_per_VLC_AP,
-                                                    discount_ratio_per_AP, first_empty_RU_position, my_UE_list);
+                                                        discount_ratio_per_AP, first_empty_RU_position, my_UE_list);
         }
     }
 
@@ -80,7 +76,6 @@ void proposedDynamicLB(int state,
     fullyConfigSatisfactionBalancedMethod(VLC_SINR_matrix, RF_data_rate_vector, VLC_data_rate_matrix, AP_association_matrix, RU_matrix_per_VLC_AP,
                                             discount_ratio_per_AP, first_empty_RU_position, my_UE_list);
 #endif // PCSBM
-
 
 
 #if DEBUG_MODE
@@ -114,7 +109,11 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
                                                  std::vector<std::pair<int, int>> &first_empty_RU_position,
                                                  std::vector<MyUeNode> &my_UE_list)
 {
-    //step1: calculate average satisfaction of the previous state.
+    /* step1: calculate average satisfaction of the previous state
+     *
+     * Note: It is possible for RUs that provided data rate in the previous state to not able to provide data rate in the current state,
+     *       recalculation of how much data rate RUs that can provide for the UE is needed
+     */
     double avg_satisfaction = 0.0;
     const std::vector<double> UE_demand = createDemandVector(my_UE_list);
     std::vector<double> throughput (UE_num, 0.0);
@@ -143,7 +142,7 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
     avg_satisfaction /= UE_num;
 
 
-    // step2: replace low-freq RUs with high-freq RUs for each VLC AP
+    /* step2: replace its low-freq RUs with available high-freq RUs for each UE */
     for (int VLC_AP_idx = 0; VLC_AP_idx < VLC_AP_num; VLC_AP_idx++) {
         if (old_serving_UE[VLC_AP_idx + RF_AP_num].empty())
             continue;
@@ -166,6 +165,9 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
         avg_satisfaction_per_VLC_AP[VLC_AP_idx] /= old_serving_UE[AP_idx].size();
     }
 
+
+    /* INTRA-AP ADJUSTMENT */
+
     // step3: divide APs into two groups
     std::vector<int> higher_than_avg;
     std::vector<int> lower_than_avg;
@@ -178,8 +180,11 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
             lower_than_avg.push_back(VLC_AP_idx + RF_AP_num);
     }
 
-    // step3-1: for each AP in the "higher" group
+    // TODO: combine the following two outer for loops to eliminate redundancy
+
+    // step3-1: for each VLC AP in the "higher" group
     for (int i = 0; i < higher_than_avg.size(); i++) {
+
         int AP_idx = higher_than_avg[i];
         std::vector<int> beyond, below;
 
@@ -209,7 +214,8 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
 
     }
 
-    // step3-2: for each AP in the "lower" group
+
+    // step3-2: for each VLC AP in the "lower" group
     for (int i = 0; i < lower_than_avg.size(); i++) {
 
         int AP_idx = lower_than_avg[i];
@@ -235,11 +241,13 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
             satisfaction[UE_idx] = std::min(throughput[UE_idx] / UE_demand[UE_idx], 1.0);
         }
 
-
         makeUpResourceDifference(avg_satisfaction, VLC_data_rate_matrix[AP_idx - RF_AP_num], throughput, satisfaction, below, first_empty_RU_position[AP_idx - RF_AP_num],
                                  RU_matrix_per_VLC_AP[AP_idx - RF_AP_num], my_UE_list);
 
+
+        // below group
         std::vector<int>::iterator it = below.begin();
+
         while (it != below.end()) {
             int UE_idx = *it;
 
@@ -249,6 +257,7 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
                 releaseAllResource(RU_matrix_per_VLC_AP[AP_idx - RF_AP_num], first_empty_RU_position[AP_idx - RF_AP_num], my_UE_list[UE_idx]);
 
                 it = below.erase(it);
+
             }
             else
                 it++;
@@ -257,27 +266,19 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
         makeUpResourceDifference(avg_satisfaction, VLC_data_rate_matrix[AP_idx - RF_AP_num], throughput, satisfaction, below, first_empty_RU_position[AP_idx - RF_AP_num],
                                  RU_matrix_per_VLC_AP[AP_idx - RF_AP_num], my_UE_list);
 
-
-        /* std::sort(below.begin(), below.end(), [&](int UE_a, int UE_b){ return (avg_satisfaction * UE_demand[UE_a] - throughput[UE_a]) >
-                                                                            (avg_satisfaction * UE_demand[UE_b] - throughput[UE_b]); });
-
-        int expel_num = (int) std::floor(expel_ratio * below.size());
-        for (int j = 0; j < expel_num; j++) {
-            int UE_idx = below[j];
-
-            throughput[UE_idx] = 0.0;
-            satisfaction[UE_idx] = 0.0;
-            releaseAllResource(RU_matrix_per_VLC_AP[AP_idx - RF_AP_num], first_empty_RU_position[AP_idx - RF_AP_num], my_UE_list[UE_idx]);
-        }
-
-        std::vector<int> new_below (below.begin() + expel_num, below.end());
-        makeUpResourceDifference(avg_satisfaction, VLC_data_rate_matrix[AP_idx - RF_AP_num], throughput, satisfaction, new_below, first_empty_RU_position[AP_idx - RF_AP_num],
-                                 RU_matrix_per_VLC_AP[AP_idx - RF_AP_num], my_UE_list);*/
     }
 
 
-    // step4: sort UEs in the descending order of demand
-    std::sort(my_UE_list.begin(), my_UE_list.end(), [&](MyUeNode a, MyUeNode b){ return satisfaction[a.getID()] < satisfaction[b.getID()]; });
+    /* step4: sort UEs in the ascending order of satisfaction
+     * If two UEs have the same satisfaction, the one with bigger demand is first
+     */
+    std::sort(my_UE_list.begin(), my_UE_list.end(), [&](MyUeNode a, MyUeNode b){ if (satisfaction[a.getID()] < satisfaction[b.getID()]) return true;
+                                                                                 else if (satisfaction[a.getID()] > satisfaction[b.getID()]) return false;
+                                                                                 else {
+                                                                                    if (a.getRequiredDataRate() > b.getRequiredDataRate()) return true;
+                                                                                    else return false;
+                                                                                 }
+                                                                                });
 
 
     // step5: APA+RA
@@ -285,28 +286,26 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
         int UE_idx = my_UE_list[i].getID();
         int prev_AP = my_UE_list[i].getCurrAssociatedAP(); // since we haven't updated APA results yet, the associated AP in the last state is still recorded in current AP
 
-        // satisfaction is above average -> continue to use the current AP and the same RUs, so no need of RA
+        // satisfaction is above average -> continue to use the current AP and the same RUs, so no need for RA
         if (prev_AP > 0 && satisfaction[UE_idx] >= avg_satisfaction) {
             my_UE_list[i].setCurrAssociatedAP(prev_AP);
             AP_association_matrix[prev_AP][UE_idx] = 1; // optional
             new_serving_UE[prev_AP].push_back(UE_idx);
         }
         else {
-            // step4-2-1: find other VLC APs which can provide data rate and which still has available RU
+
             std::vector<std::pair<int, double>> candidate_VLC_AP;
 
             for (int VLC_AP_idx = 0; VLC_AP_idx < VLC_AP_num; VLC_AP_idx++) {
-                if (VLC_AP_idx != prev_AP - RF_AP_num && VLC_data_rate_matrix[VLC_AP_idx][UE_idx][1] > 0.0 && first_empty_RU_position[VLC_AP_idx].first >= 1) {
+                // step4-2-1: find VLC APs which can provide data rate and which still has available RU
+                if (VLC_data_rate_matrix[VLC_AP_idx][UE_idx][1] > 0.0 && first_empty_RU_position[VLC_AP_idx].first >= 1) {
+
                     int subcarrier_idx = first_empty_RU_position[VLC_AP_idx].first;
                     int time_slot_idx = first_empty_RU_position[VLC_AP_idx].second;
                     double offered_data_rate = 0.0;
                     double discounted_demand = (prev_AP == 0 && satisfaction[UE_idx] >= avg_satisfaction) ? UE_demand[UE_idx] : avg_satisfaction * UE_demand[UE_idx];
 
                     findFirstEffectiveSubcarrier(VLC_data_rate_matrix[VLC_AP_idx][UE_idx], subcarrier_idx, time_slot_idx);
-
-#if DEBUG_MODE
-                    printResourceUnitMatrix(RU_matrix_per_VLC_AP, VLC_AP_idx);
-#endif // DEGUB_MODE
 
                     while (offered_data_rate < discounted_demand && subcarrier_idx >= 1) {
                         if (RU_matrix_per_VLC_AP[VLC_AP_idx][subcarrier_idx][time_slot_idx] == 0)
@@ -325,10 +324,11 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
                     candidate_VLC_AP.emplace_back(0, RF_data_rate_vector[old_serving_UE[0].size() + 1]);
             }
 
-            // if the candidate set is not empty, choose the AP with the most data rate from it.
+
             int new_AP = prev_AP;
             double max_offered_data_rate = 0.0;
 
+            // if the candidate set is not empty, choose the AP with the highest data rate from it.
             if (!candidate_VLC_AP.empty()) {
                 int best_index = 0;
                 for (int i = 1; i < candidate_VLC_AP.size(); i++) {
@@ -345,7 +345,7 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
             AP_association_matrix[new_AP][UE_idx] = 1;
 
             if (new_AP != prev_AP) {
-                // release resource
+                // release old resources
                 AP_association_matrix[prev_AP][UE_idx] = 0;
 
                 if (prev_AP > 0) {
@@ -368,7 +368,7 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
                     }
                 }
 
-                // allocate resource
+                // allocate new resources
                 if (new_AP > 0) {
                     int new_VLC_AP = new_AP - RF_AP_num;
                     throughput[UE_idx] = resourceAllocation(VLC_data_rate_matrix[new_VLC_AP][UE_idx], RU_matrix_per_VLC_AP[new_VLC_AP], first_empty_RU_position[new_VLC_AP],
@@ -376,9 +376,20 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
 
                     satisfaction[UE_idx] = std::min(throughput[UE_idx] / UE_demand[UE_idx], 1.0);
                 }
-                else if (new_AP == 0)
+                else if (new_AP == 0) {
                     old_serving_UE[0].push_back(UE_idx);
+                }
             }
+            // the expelled UE connects back to its last AP
+            else if (new_AP == prev_AP && throughput[UE_idx] == 0) {
+                int new_VLC_AP = new_AP - RF_AP_num;
+
+                throughput[UE_idx] = resourceAllocation(VLC_data_rate_matrix[new_VLC_AP][UE_idx], RU_matrix_per_VLC_AP[new_VLC_AP], first_empty_RU_position[new_VLC_AP],
+                                                            max_offered_data_rate, my_UE_list[i]);
+
+                satisfaction[UE_idx] = std::min(throughput[UE_idx] / UE_demand[UE_idx], 1.0);
+            }
+
         }
     }
 
@@ -413,7 +424,7 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
                                      first_empty_RU_position[VLC_AP_idx], RU_matrix_per_VLC_AP[VLC_AP_idx], my_UE_list);
         }
 
-        // if there is residual resources in this VLC AP, then allocate all of them to the UE with highest SINR
+        // if there is still residual resources in this VLC AP, then allocate all of them to the UE with highest SINR
         int best_SINR_UE = new_serving_UE[AP_idx][0];
         for (int i = 1; i < new_serving_UE[AP_idx].size(); i++) {
             if (VLC_SINR_matrix[VLC_AP_idx][new_serving_UE[AP_idx][i]][1] > VLC_SINR_matrix[VLC_AP_idx][best_SINR_UE][1])
@@ -425,7 +436,7 @@ void partiallyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vect
 
         satisfaction[best_SINR_UE] = std::min(throughput[best_SINR_UE] / UE_demand[best_SINR_UE], 1.0);
 
- #if DEBUG_MODE
+#if DEBUG_MODE
         existDuplicateRU(new_serving_UE[VLC_AP_idx + RF_AP_num], my_UE_list);
 #endif // DEBUG_MODE
     }
@@ -444,9 +455,11 @@ void fullyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vector<d
                                              std::vector<MyUeNode> &my_UE_list)
 {
     // pre-step: clear AP association matrix, RU matrix and first position of empty RU
-    for (int i = 0; i < AP_association_matrix.size(); i++)
-        for (int j = 0; j < AP_association_matrix[i].size(); j++)
+    for (int i = 0; i < AP_association_matrix.size(); i++) {
+        for (int j = 0; j < AP_association_matrix[i].size(); j++) {
             AP_association_matrix[i][j] = 0;
+        }
+    }
 
     for (int i = 0; i < RU_matrix_per_VLC_AP.size(); i++) {
         first_empty_RU_position[i] = std::make_pair(effective_subcarrier_num, time_slot_num-1);
@@ -474,7 +487,7 @@ void fullyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vector<d
         std::sort(my_UE_list.begin(), my_UE_list.end(), [](MyUeNode a, MyUeNode b){ return a.getLastSatisfaction() < b.getLastSatisfaction(); });
 
 
-    // step3: APA + RA
+    // step3: joint APA and RA
     std::vector<double> throughput (UE_num, 0.0);
     std::vector<double> satisfaction (UE_num, 0.0);
     std::vector<std::vector<int>> serving_UE (RF_AP_num + VLC_AP_num, std::vector<int> ());
@@ -500,7 +513,7 @@ void fullyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vector<d
         }
     }
 
-    // UEs served by RF AP are not allocated resource until the entire APA+RA process is done
+    // UEs served by RF AP are not allocated resource until the joint APA and RA process is done
     for (int i = 0; i < serving_UE[0].size(); i++) {
         int UE_idx = serving_UE[0][i];
 
@@ -516,14 +529,19 @@ void fullyConfigSatisfactionBalancedMethod(std::vector<std::vector<std::vector<d
         residualResourceAllocation(discount_ratio_per_AP[VLC_AP_idx + RF_AP_num], VLC_SINR_matrix[VLC_AP_idx], VLC_data_rate_matrix[VLC_AP_idx], throughput, satisfaction,
                                    first_empty_RU_position[VLC_AP_idx], RU_matrix_per_VLC_AP[VLC_AP_idx], my_UE_list, serving_UE, AP_association_matrix, RF_data_rate_vector, VLC_AP_idx);
 
-#if DEBUG_MODE
-        existDuplicateRU(serving_UE[VLC_AP_idx + RF_AP_num], my_UE_list);
-#endif // DEBUG_MODE
     }
+
 
     // step5: finally, update throughput each UE gets in this state and calculate average satisfaction in each AP
     updateInfoToMyUeList(throughput, satisfaction, my_UE_list);
+
+
+#if DEBUG_MODE
+        existDuplicateRU(serving_UE[VLC_AP_idx + RF_AP_num], my_UE_list);
+#endif // DEBUG_MODE
+
 }
+
 
 std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vector<double>>> &VLC_data_rate_matrix,
                                                 std::vector<double> &RF_data_rate_vector,
@@ -565,19 +583,19 @@ std::pair<int, double> accessPointAssociation(std::vector<std::vector<std::vecto
     }
 
     // step2: after all VLC APs finished allocation, choose the one with max offered data rate
-    int result_VLC_AP = -1;
+    int final_VLC_AP = -1;
     double max_data_rate = 0.0;
 
     for (int VLC_AP_idx = 0; VLC_AP_idx < VLC_AP_num; VLC_AP_idx++) {
         if (offered_data_rate_per_VLC_AP[VLC_AP_idx] > max_data_rate) {
-            result_VLC_AP = VLC_AP_idx;
+            final_VLC_AP = VLC_AP_idx;
             max_data_rate = offered_data_rate_per_VLC_AP[VLC_AP_idx];
         }
     }
 
     // modification: add the second condition to avoid too many users connected to RF
-    if (max_data_rate > RF_data_rate_vector[served_by_RF.size() + 1] || max_data_rate >= UE_demand[UE_idx] * demand_discount_per_AP[result_VLC_AP + RF_AP_num])
-        return std::make_pair(result_VLC_AP + RF_AP_num, offered_data_rate_per_VLC_AP[result_VLC_AP]);
+    if (max_data_rate > RF_data_rate_vector[served_by_RF.size() + 1] || max_data_rate >= UE_demand[UE_idx] * demand_discount_per_AP[final_VLC_AP + RF_AP_num])
+        return std::make_pair(final_VLC_AP + RF_AP_num, max_data_rate);
     else
         return std::make_pair(0, RF_data_rate_vector[served_by_RF.size() + 1]);
 }
@@ -697,7 +715,7 @@ void residualResourceAllocation(double &discount_ratio,
     }
 
 
-    /*// New: to check if those UEs connected to WiFi can switch to LiFi for better data rate
+    // New: to check if those UEs connected to WiFi can switch to LiFi for better data rate
     std::vector<int> potential;
     for (int i = 0; i < serving_UE[0].size(); i++) {
         if (VLC_data_rate_matrix[serving_UE[0][i]][1] > 0)
@@ -750,7 +768,7 @@ void residualResourceAllocation(double &discount_ratio,
             throughput[UE_idx] = resourceAllocation(VLC_data_rate_matrix[UE_idx], RU_matrix, first_empty_RU_position, offered_data_rate, my_UE_list[UE_idx]);
             satisfaction[UE_idx] = std::min(throughput[UE_idx] / my_UE_list[UE_idx].getRequiredDataRate(), 1.0);
         }
-    }*/
+    }
 
     allocateResourceEqually(VLC_SINR_matrix, VLC_data_rate_matrix, throughput, satisfaction, serving_UE[VLC_AP_idx + RF_AP_num], first_empty_RU_position, RU_matrix, my_UE_list);
 }
@@ -770,8 +788,6 @@ void makeUpResourceDifference(double discount_ratio,
         return;
 
     std::sort(target_UE.begin(), target_UE.end(), [&](int UE_a, int UE_b){ return satisfaction[UE_a] < satisfaction[UE_b]; });
-    /*std::sort(target_UE.begin(), target_UE.end(), [&](int UE_a, int UE_b){ return (discount_ratio * my_UE_list[UE_a].getRequiredDataRate() - throughput[UE_a]) >
-                                                                            (discount_ratio * my_UE_list[UE_b].getRequiredDataRate() - throughput[UE_b]); });*/
 
     int index = 0;
     while (first_empty_RU_position.first >= 1 && index < target_UE.size()) {
@@ -946,7 +962,7 @@ void existDuplicateRU(std::vector<int> &serving_UE, std::vector<MyUeNode> &my_UE
 
 /* functionality:
  * 1. recalculate how much data rate the RUs the UE has provide
- * 2. release RUs which cannot provide any data rate for the UE
+ * 2. release RUs that cannot provide any data rate for the UE
  */
 double recalculateRuDataRate(std::vector<double> &VLC_data_rate_matrix, std::vector<std::vector<int>> &RU_matrix, std::pair<int, int> &first_empty_RU_position, MyUeNode &UE_node)
 {
@@ -982,10 +998,11 @@ double recalculateRuDataRate(std::vector<double> &VLC_data_rate_matrix, std::vec
 }
 
 // find the first subcarrier that provides data rate for the specific UE
-// if this UE does not use the first empty RU, then it's unnecessary for first_empty_RU_position to update
+// if this UE does not use the first empty RU, then it's unnecessary to update first_empty_RU_position
 int findFirstEffectiveSubcarrier(std::vector<double> &VLC_data_rate_matrix, int &subcarrier_idx, int &time_slot_idx)
 {
     int update_flag = 1;
+
     while (subcarrier_idx >= 1 && VLC_data_rate_matrix[subcarrier_idx] == 0.0) {
         update_flag = 0;
         subcarrier_idx--;
