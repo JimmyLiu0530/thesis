@@ -103,7 +103,7 @@ CXXFLAGS="-Wno-error -std=c++11" ./waf configure
 ## Method Description
 No matter which method is executed, they all follow the  execution flow below:
 
-![](https://i.imgur.com/GBji7aK.png =480x)
+![](https://i.imgur.com/GBji7aK.png)
 
 > $N_s$ is the total number of states in one simulation.
 ### Referenced Method
